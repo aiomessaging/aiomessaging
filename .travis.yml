@@ -9,5 +9,6 @@ install:
   - pipenv install --dev
 script:
   - pipenv run pytest --cov-report=term-missing --cov aiomessaging
+  - pipenv run mypy aiomessaging --ignore-missing-imports
 after_success:
   - codecov

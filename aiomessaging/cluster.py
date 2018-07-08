@@ -14,7 +14,7 @@ class Cluster(BaseConsumer):
     this queue. Application is responsible to create consumers for this queues.
     """
 
-    generation_queue: asyncio.Queue = None
+    generation_queue: asyncio.Queue
 
     def __init__(self, queue, exchange, loop, **kwargs):
         self.exchange = exchange

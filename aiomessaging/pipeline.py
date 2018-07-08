@@ -6,7 +6,7 @@ from .logging import LoggerAdapter
 
 
 class Pipeline(object):
-    def __init__(self, config: List):
+    def __init__(self, config: List) -> None:
         self.callable_list = config
         self._log = logging.getLogger(__name__)
         self.log = LoggerAdapter(self._log, {})

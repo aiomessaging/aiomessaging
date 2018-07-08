@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class Message:
     id = None
-    event: Event = None
+    event: Event
     content: Dict = {}
     meta: Dict = {}
     route: List = []
@@ -49,7 +49,7 @@ def message_from_dict(data: dict) -> Message:
         event = event_from_dict(data.pop('event'))
     except KeyError:
         logger.warning('Message without event received')
-        return None
+        raise Exception("Message without event received")
     if 'type' in data:
         data.pop('type')
     return Message(event=event, **data)

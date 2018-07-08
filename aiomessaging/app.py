@@ -1,3 +1,5 @@
+"""Messaging application.
+"""
 import os
 import asyncio
 import logging
@@ -12,12 +14,17 @@ from .router import Router
 from .queues import QueueBackend
 
 
-class AiomessagingApp(object):
+# pylint: disable=too-many-instance-attributes
+class AiomessagingApp:
     """aiomessaging application.
     """
+    cluster: Cluster
     queue: QueueBackend
     config: Config
+
     generation_listener = None
+    generation_monitor: asyncio.Task
+
     log: logging.Logger
 
     def __init__(self, config=None, loop=None):
@@ -34,10 +41,11 @@ class AiomessagingApp(object):
             self.config.from_file(config)
 
         self.configure_logging()
-        self.log.debug(f'Configuration file: {config}')
+        self.log.debug('Configuration file: %s', config)
 
         self.queue = self.config.get_queue_backend()
 
+    # pylint: disable=no-self-use
     def event_types(self):
         """Get event types served by this instance.
         """
@@ -107,7 +115,7 @@ class AiomessagingApp(object):
             queue_name = await self.cluster.generation_queue.get()
             self.log.info('Message in generation_queue %s', queue_name)
             queue = await self.queue.generation_queue(name=queue_name)
-            # FIXME: we need a correct type
+            # TODO: we need a correct type
             messages_queue = await self.queue.messages_queue(
                 'example_event'
             )
@@ -119,7 +127,7 @@ class AiomessagingApp(object):
             self.started_generators.append(gen)
 
     async def monitor_generation(self):
-        """
+        """Generation monitoring coroutine.
         """
         self.log.debug("Start generators monitoring")
         while True:
@@ -131,11 +139,11 @@ class AiomessagingApp(object):
             await asyncio.sleep(1)
 
     async def stop_listen_generation(self):
+        """Stop listen for generation queues.
+        """
         self.generation_listener.cancel()
         self.generation_monitor.cancel()
         # handle errors from listen_generation
-        # TODO: hearbeat/monitoring :-(
-        # FIXME: check error handling
         try:
             exc = None
             exc = self.generation_listener.exception()
@@ -148,9 +156,11 @@ class AiomessagingApp(object):
 
         for item in self.started_generators:
             await item.stop()
-        self.log.info(f'Stop {len(self.started_generators)} gens')
+        self.log.info('Stop %s gens', len(self.started_generators))
 
     async def create_event_consumers(self):
+        """Create consumers for each event type.
+        """
         for event_type in self.event_types():
             event_pipeline = self.config.get_event_pipeline(event_type)
             generators = self.config.get_generators(event_type)
@@ -168,6 +178,8 @@ class AiomessagingApp(object):
             await self.event_consumers[event_type].start()
 
     async def create_message_consumers(self):
+        """Create message consumers.
+        """
         router = Router()
 
         for event_type in self.event_types():
@@ -182,6 +194,8 @@ class AiomessagingApp(object):
             await self.message_consumers[event_type].start()
 
     async def create_output_consumers(self):
+        """Create output consumers.
+        """
         for event_type in self.event_types():
             queue = await self.queue.output_queue(event_type)
             self.output_consumers[event_type] = OutputConsumer(
@@ -192,6 +206,8 @@ class AiomessagingApp(object):
             await self.output_consumers[event_type].start()
 
     def configure_logging(self):
+        """Configure logging.
+        """
         self.log = logging.getLogger('aiomessaging')
         # if self.config.app.debug:
         #     loglevel = logging.INFO
@@ -203,13 +219,19 @@ class AiomessagingApp(object):
         self.log.setLevel(logging.DEBUG)
 
     def set_event_loop(self, loop):
+        """Set event loop to run on.
+        """
         self.loop = loop
 
     def stop(self):
+        """Stop application event loop.
+        """
         self.log.debug('Stopping event loop')
         self.loop.stop()
 
     async def shutdown(self):
+        """Shutdown application gracefully.
+        """
         await self.stop_listen_generation()
         await self.cluster.stop()
         self.log.debug("Cluster stopped")
@@ -225,10 +247,12 @@ class AiomessagingApp(object):
 async def stop_all(consumers):
     """Stop all consumers helper.
     """
+    # pylint: disable=expression-not-assigned
     [await a.stop() for a in consumers.values()]
 
 
 if __name__ == '__main__':
     # TODO: remove before release
+    # pylint: disable=invalid-name
     app = AiomessagingApp('example.yml')  # pragma: no cover
     app.start()  # pragma: no cover

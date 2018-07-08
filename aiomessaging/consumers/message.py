@@ -1,3 +1,5 @@
+"""Message consumer.
+"""
 from ..message import Message
 
 from .base import BaseMessageConsumer

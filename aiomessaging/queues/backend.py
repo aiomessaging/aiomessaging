@@ -1,3 +1,5 @@
+"""Messaging queue backend.
+"""
 import logging
 import asyncio
 
@@ -17,7 +19,8 @@ DECLARE_EXCHANGE_TIMEOUT = 1
 DECLARE_QUEUE_TIMEOUT = 1
 
 
-class QueueBackend(object):
+# pylint: disable=too-many-instance-attributes
+class QueueBackend:
     """Queue backend implementation.
     """
 
@@ -32,6 +35,7 @@ class QueueBackend(object):
     _channel_publish = None
     _channel_publish_opening = None
 
+    # pylint: disable=too-many-arguments
     def __init__(self, host='localhost', port=5672, username='guest',
                  password='guest', virtual_host="/", loop=None):
         self.loop = loop
@@ -43,15 +47,21 @@ class QueueBackend(object):
 
         self.log = logger
 
+        self.connection = None
         self._connecting = False
         self._closing = False
 
+    # pylint: disable=no-self-use
     def get_url(self):
+        """Connection string.
+        """
         # TODO: use parameters from instance
         return ('amqp://guest:guest@localhost:5672/?connection_attempts=10'
                 '&retry_delay=2')
 
     def connect(self, loop=None):
+        """Establish connection to queue backend.
+        """
         if loop:
             self.loop = loop
         if not self.loop:
@@ -71,6 +81,8 @@ class QueueBackend(object):
 
     @property
     def is_open(self):
+        """Connection opened flag.
+        """
         return self.connection.is_open
 
     async def channel(self, reuse=False):
@@ -145,27 +157,43 @@ class QueueBackend(object):
         return await asyncio.wait_for(future, timeout=DECLARE_CHANNEL_TIMEOUT)
 
     async def publish(self, exchange, routing_key, body):
+        """Publish message to queue.
+
+        DEPRECATED
+        """
         channel = await self.channel()
         properties = pika.BasicProperties(app_id='example-publisher',
                                           content_type='application/json')
+        # pylint: disable=c-extension-no-member
         channel.basic_publish(exchange, routing_key,
                               ujson.dumps(body, ensure_ascii=False),
                               properties)
         channel.close()
 
+    # pylint: disable=unused-argument
     def on_channel_closed(self, channel, reply_code, reply_text):
+        """Handle channel closed event.
+        """
         self.log.debug('CHANNEL%i: closed', channel.channel_number)
         self.log.info("channel closed %s: %s", reply_code, reply_text)
 
     def on_open_error_callback(self, *args, **kwargs):
-        # FIXME: args
+        """Opening error callback.
+        """
+        # TODO: args
         self.log.error('Opening error. Args: %s Kwargs: %s', args, kwargs)
 
+    # pylint: disable=unused-argument
     def on_connection_open(self, connection):
+        """Connection opened callback.
+        """
         self._reconnect_task = None
         self._connecting.set_result(True)
 
+    # pylint: disable=unused-argument
     def on_connection_closed(self, connection, reply_code, reply_text):
+        """Connection closed callback.
+        """
         if self._normal_close:
             self.log.info('Connection closed')
         else:
@@ -185,6 +213,8 @@ class QueueBackend(object):
             self.loop.call_later(3, self.reconnect)
 
     def reconnect(self):
+        """Reconnect.
+        """
         if self._reconnect_task:
             self.log.debug('Another reconnection task active')
             return
@@ -194,16 +224,22 @@ class QueueBackend(object):
         )
 
     def close(self) -> asyncio.Future:
+        """Close connection.
+        """
         self._normal_close = True
         self.connection.close()
         return self._closing  # future will be resolved after connection close
 
     async def get_queue(self, *args, **kwargs) -> Queue:
+        """Get queue for backend.
+        """
         queue = Queue(self, *args, **kwargs)
         self.log.debug("Start declare queue...")
         return await queue.declare()
 
     async def events_queue(self, event_type) -> Queue:
+        """Get events queue.
+        """
         name = f"events.{event_type}"
         return await self.get_queue(name)
 
@@ -221,6 +257,8 @@ class QueueBackend(object):
         )
 
     async def messages_queue(self, event_type) -> Queue:
+        """Get messages queue.
+        """
         return await self.get_queue(
             name=f"messages.{event_type}",
             auto_delete=False, durable=True,
@@ -229,6 +267,8 @@ class QueueBackend(object):
         )
 
     async def cluster_queue(self) -> Queue:
+        """Get cluster queue.
+        """
         return await self.get_queue(
             name=gen_id('cluster.node'),
             auto_delete=True,
@@ -240,6 +280,8 @@ class QueueBackend(object):
         )
 
     async def output_queue(self, event_type) -> Queue:
+        """Get output queue.
+        """
         name = f"output.{event_type}"
         return await self.get_queue(
             name=name,

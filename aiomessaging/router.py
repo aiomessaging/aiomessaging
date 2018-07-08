@@ -1,7 +1,9 @@
+"""Router.
+"""
 from .message import Message
 
 
-class Router(object):
+class Router:
     """Message router.
 
     Routes messages through output backends.
@@ -13,8 +15,14 @@ class Router(object):
     def __init__(self):
         pass
 
+    # pylint: disable=unused-argument
     def next_hope(self, message: Message):
+        """Next hope for the message.
+        """
         pass
 
+    # pylint: disable=unused-argument,no-self-use
     def select_output(self, event_type, message: Message):
+        """Select output for message.
+        """
         return "sns"

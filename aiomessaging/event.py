@@ -1,7 +1,13 @@
+"""Event object.
+"""
 from .utils import gen_id
 
 
-class Event(object):
+class Event:
+    """Event.
+
+    Represents incoming message.
+    """
     def __init__(self, event_type, payload=None, event_id=None):
         self.id = event_id
         self.type = event_type
@@ -11,14 +17,18 @@ class Event(object):
             self.id = gen_id()
 
     def to_dict(self):
+        """Serialize event to dict.
+        """
         return {
             'id': self.id,
             'type': self.type,
             'payload': self.payload
         }
 
-
-def event_from_dict(data: dict) -> Event:
-    event_id = data.pop('id', None)
-    event_type = data.pop('type')
-    return Event(event_type, data, event_id)
+    @staticmethod
+    def from_dict(data: dict) -> 'Event':
+        """Create Event from dict.
+        """
+        event_id = data.pop('id', None)
+        event_type = data.pop('type')
+        return Event(event_type, data, event_id)

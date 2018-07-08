@@ -1,3 +1,5 @@
+"""Utils.
+"""
 import uuid
 import logging
 from importlib import import_module
@@ -7,24 +9,33 @@ logger = logging.getLogger(__name__)
 
 
 def gen_id(prefix='', sep='.'):
+    """Generate id with prefix and separator.
+
+    Generate ids if form `'{prefix}{separator}{random}'`.
+    """
     uniq = uuid.uuid4().hex
-    if len(prefix) == 0:
+    if not prefix:
         return uniq
     return sep.join([prefix, uniq])
 
 
 def class_from_string(class_string, base=None):
+    """Get class from string.
+
+    Use base to search in default module.
+    """
     # ClassName -> <base>.ClassName
     # module.ClassName -> <base>.module.ClassName
     tried_paths = []
-    logger.debug("Try to find class for `{}` with base {}".format(
+    logger.debug(
+        "Try to find class for `%s` with base %s",
         class_string, base
-    ))
+    )
     if base is not None:
         try:
             base_module = import_module(base)
             if hasattr(base_module, class_string):
-                logger.debug("Class found for {}".format(class_string))
+                logger.debug("Class found for %s", class_string)
                 return getattr(base_module, class_string)
         except ImportError:
             # no class in base location
@@ -47,7 +58,7 @@ def class_from_string(class_string, base=None):
             tried_paths.append(class_string)
     else:
         logger.debug(
-            "There is no module path in `{}` identifier.",
+            "There is no module path in `%s` identifier.",
             class_string
         )
 

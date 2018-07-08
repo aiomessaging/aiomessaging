@@ -1,12 +1,13 @@
+"""Output consumer.
+"""
 from ..message import Message
 
 from .base import BaseMessageConsumer
 
 
 class OutputConsumer(BaseMessageConsumer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
+    """Output consumer.
+    """
     async def handle_message(self, message: Message):
         """
         1. Try send message thought backend

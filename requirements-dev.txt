@@ -7,7 +7,7 @@ pytest-cov==2.5.1
 pytest-watch==4.2.0
 pytest-asyncio==0.8.0
 pytest-benchmark==3.1.1
-pytest_flakes
+pytest_flakes==3.0.2
 
 aiomonitor
 

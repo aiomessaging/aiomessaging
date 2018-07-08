@@ -1,3 +1,5 @@
+"""Messaging consumers.
+"""
 from .generation import GenerationConsumer
 from .event import EventConsumer
 from .message import MessageConsumer

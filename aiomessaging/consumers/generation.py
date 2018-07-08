@@ -1,3 +1,5 @@
+"""Generation consumer.
+"""
 import time
 import asyncio
 
@@ -33,7 +35,7 @@ class GenerationConsumer(MessageConsumerMixIn, BaseConsumer):
     async def stop(self):
         self.log.info("Stopping")
 
-        # FIXME: ugly hack. why?
+        # pylint: disable=protected-access
         if self.messages_queue._backend.is_open:
             self.messages_queue.close()
 
@@ -63,6 +65,8 @@ class GenerationConsumer(MessageConsumerMixIn, BaseConsumer):
         await self.send_output(message)
 
     async def send_output(self, message: Message):
+        """Send message to messages queue.
+        """
         await self.messages_queue.publish(
             message.to_dict(),
             routing_key=message.type

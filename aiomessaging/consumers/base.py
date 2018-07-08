@@ -1,12 +1,15 @@
-import ujson
+"""Base consumers.
+"""
 import asyncio
 import logging
 
-from ..message import Message, message_from_dict
+import ujson
+
+from ..message import Message
 from ..logging import LoggerAdapter
 
 
-class BaseConsumer(object):
+class BaseConsumer:
     """Base consumer implementation.
 
     Produces coroutines:
@@ -29,12 +32,16 @@ class BaseConsumer(object):
         self.configure_logger()
 
     def configure_logger(self):
+        """Configure logger.
+        """
         self.log = LoggerAdapter(
             logging.getLogger(__name__),
             {'name': self.__class__.__name__}
         )
 
     async def start(self):
+        """Start consumer and monitoring tasks.
+        """
         self.running = True
         self._consume()
         self.monitoring_task = self.loop.create_task(self._monitoring())
@@ -54,17 +61,25 @@ class BaseConsumer(object):
                     del task
             await asyncio.sleep(0.5)
 
+    # pylint: disable=unused-argument
     def _handler(self, channel, basic_deliver, properties, body):
         self.log.info('Start task execution (_handler): %s', body)
+        # pylint: disable=c-extension-no-member
         task = self.loop.create_task(
             self.handler(ujson.loads(body))
         )
         self.msg_tasks.append(task)
         channel.basic_ack(basic_deliver.delivery_tag)
 
+    # pylint: disable=unused-argument
     async def handler(self, message):
+        """Queue message handler.
+
+        Must be implemented in derived class.
+        """
         raise NotImplementedError
 
+    # pylint: disable=too-many-branches
     async def stop(self):
         """Stop consumer.
 
@@ -98,47 +113,63 @@ class BaseConsumer(object):
                 self.log.debug('No errors, cancelled')
             except asyncio.InvalidStateError:
                 self.log.debug('No errors in task')
-            except Exception:
+            except Exception:  # pylint: disable=broad-except
                 self.log.exception('Main task exception')
             self.log.info("Main task cancelled")
 
         waiting = self.msg_tasks
 
-        for w in waiting:
-            self.log.debug('Wait for %s', w)
+        for waiter in waiting:
+            self.log.debug('Wait for %s', waiter)
             try:
-                exc = w.exception()
+                exc = waiter.exception()
                 if exc:
                     try:
                         raise exc
-                    except Exception:
+                    except Exception:  # pylint: disable=broad-except
                         self.log.exception("Exception from consumer waitings")
-                if w.cancelled() or w.done():
+                if waiter.cancelled() or waiter.done():
                     self.log.info('alredy done or cancelled')
                 else:
-                    await asyncio.wait_for(w, timeout=1)
+                    await asyncio.wait_for(waiter, timeout=1)
             except asyncio.CancelledError:
                 self.log.debug('Already cancelled')
 
         self.log.info('Wait for complete')
 
 
+# pylint: disable=abstract-method
 class SingleQueueConsumer(BaseConsumer):
+    """Single queue consumer.
+    """
     pass
 
 
+# pylint: disable=abstract-method
 class EventTypedConsumer(BaseConsumer):
+    """Event typed consumer.
+    """
     def __init__(self, event_type, *, queue, loop):
         self.event_type = event_type
         super().__init__(queue=queue, loop=loop)
 
 
 class MessageConsumerMixIn:
+    """Message consumer mixin.
+    """
     async def handler(self, message):
-        obj = message_from_dict(message)
+        """Internal message handler.
+
+        Converts queue message to Message instance.
+        """
+        obj = Message.from_dict(message)
         await self.handle_message(obj)
 
     async def handle_message(self, message: Message):
+        """Message handler.
+
+        Must be defined on derived class.
+        """
         raise NotImplementedError  # pragma: no cover
 
 

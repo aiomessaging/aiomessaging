@@ -1,3 +1,5 @@
+"""Queue.
+"""
 import logging
 import asyncio
 
@@ -8,6 +10,7 @@ import ujson
 logger = logging.getLogger(__name__)
 
 
+# pylint: disable=too-many-instance-attributes
 class Queue:
 
     """Queue.
@@ -28,6 +31,7 @@ class Queue:
     _channel: pika.channel.Channel
     _normal_close = False
 
+    # pylint: disable=too-many-arguments
     def __init__(self, backend, name=None, exchange=None, exchange_type=None,
                  routing_key=None, auto_delete=True, durable=False):
         self._backend = backend
@@ -72,6 +76,9 @@ class Queue:
         return self
 
     async def declare_exchange(self) -> asyncio.Future:
+        """Declare exchange for queue.
+        """
+        # pylint: disable=protected-access
         future = self._backend._create_future()
 
         def on_declare_exchange(frame):
@@ -87,10 +94,13 @@ class Queue:
         return future
 
     async def declare_queue(self) -> asyncio.Future:
+        """Declare amqp queue.
+        """
+        # pylint: disable=protected-access
         future = self._backend._create_future()
 
         def on_queue_declare(method_frame):
-            # FIXME: there is a race condition
+            # TODO: there is a race condition (check)
             self.name = method_frame.method.queue
             future.set_result(method_frame)
             self.log.debug('Declared ok: %s', method_frame)
@@ -106,6 +116,9 @@ class Queue:
         return future
 
     async def bind_queue(self):
+        """Bind queue to exchange.
+        """
+        # pylint: disable=protected-access
         future = self._backend._create_future()
 
         def on_bindok(unused_frame):
@@ -120,8 +133,9 @@ class Queue:
         """Start consume queue.
 
         You must pass handler to start consume.
+
+        TODO: only one consumer per queue allowed in case of reconnect
         """
-        # FIXME: only one consumer per queue allowed in case of reconnect
         self._consume_handler = handler
         self.log.info("%s: Start consume", self.name)
         self._channel.add_on_close_callback(self.on_channel_closed)
@@ -130,6 +144,10 @@ class Queue:
         self.log.info("Consumer tag (%s) %s", id(self), self._consumer_tag)
 
     async def declare_and_consume(self, handler):
+        """Declare queue and consume.
+
+        Used in reconnect.
+        """
         try:
             await self.declare()
             self.consume(handler)
@@ -137,6 +155,8 @@ class Queue:
             self.reconnect()
 
     async def publish(self, body, routing_key=None):
+        """Publish message to the queue using exchange.
+        """
         properties = pika.BasicProperties(
             app_id='example-publisher',
             content_type='application/json'
@@ -148,9 +168,9 @@ class Queue:
             channel.basic_publish(
                 self.exchange,
                 routing_key or self.routing_key or '',
+                # pylint: disable=c-extension-no-member
                 ujson.dumps(body, ensure_ascii=False),
-                properties
-            )
+                properties)
         except pika.exceptions.ChannelClosed:
             self.log.error(
                 'Message not delivered (%s): %s',
@@ -159,6 +179,10 @@ class Queue:
         channel.close()
 
     def on_channel_closed(self, *args, **kwargs):
+        """Handle channel closed event.
+
+        Call reconnect after timeout.
+        """
         if not self._normal_close:
             self.log.warning(
                 'Channel closed. Reconnect after 5s. args: %s, kwargs: %s',
@@ -167,6 +191,8 @@ class Queue:
             self._backend.loop.call_later(5, self.reconnect)
 
     def on_consume_cancelled(self, *args, **kwargs):
+        """Handle consume cancelled event.
+        """
         self.log.warning(
             'Consume cancelled. Reconnect after 5s. args: %s, kwargs: %s',
             args, kwargs
@@ -216,6 +242,8 @@ class Queue:
         return self.name is not None
 
     def close(self):
+        """Close queue and channel.
+        """
         self._normal_close = True
 
         try:
@@ -228,7 +256,11 @@ class Queue:
             pass
 
     def on_cancelok(self, *args, **kwargs):
+        """Handle cancelok.
+        """
         self.log.info("Cancelok %s %s", args, kwargs)
 
     def __repr__(self):
+        """Queue representation.
+        """
         return f'<Queue (name={self.name};exchange={self.exchange};routing_key={self.routing_key}>'

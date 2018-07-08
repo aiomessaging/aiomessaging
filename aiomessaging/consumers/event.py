@@ -1,3 +1,5 @@
+"""Event consumer.
+"""
 from ..event import Event
 from ..exceptions import DropException, DelayException
 
@@ -31,13 +33,18 @@ class EventConsumer(EventTypedConsumer):
             pass
         except DelayException:
             pass
-        # message.ack()
 
     async def handle_event(self, event: Event):
+        """Event handler.
+
+        Process event with event pipeline and pass it to generator.
+        """
         event = await self.pipeline(event)
         await self.generate_messages(event)
 
     async def generate_messages(self, event: Event):
+        """Generate messages from event.
+        """
         # start generators and pass tmp queue to them
         # wait them to finish
         self.log.debug("Generate messages for event %s", event)
@@ -46,7 +53,7 @@ class EventConsumer(EventTypedConsumer):
         await self.generators(tmp_queue, event)
         # TODO: check generator results. Stop if failed.
         await self.start_consume(tmp_queue)
-        tmp_queue.close()  # FIXME: remove??
+        tmp_queue.close()
 
     async def start_consume(self, queue):
         """ Start consume queue with generated messages

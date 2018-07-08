@@ -1,3 +1,5 @@
+"""Cluster utils.
+"""
 import asyncio
 
 
@@ -29,8 +31,6 @@ class Cluster(BaseConsumer):
     async def handler(self, message):
         """Handle cluster message
         """
-        # FIXME: move down
-        # message.ack()
         self.log.info("Cluster message recieved %s", message)
 
         self.log.debug("Message body:\n%s", message)

@@ -1,4 +1,12 @@
+"""Exceptions.
+"""
+
+
 class DropException(Exception):
+    """Drop event or message exception.
+
+    Consumer must drop message when handler raise this exception.
+    """
     pass
 
 

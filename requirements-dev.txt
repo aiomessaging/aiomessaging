@@ -1,0 +1,14 @@
+-r requirements.txt
+
+ipdb
+
+pytest
+pytest-cov
+pytest-watch
+pytest-asyncio
+pytest-benchmark
+pytest_flakes
+
+aiomonitor
+
+flake8

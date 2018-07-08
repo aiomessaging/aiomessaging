@@ -1,0 +1,22 @@
+# aiomessaging example configuration file
+app:
+  debug: False
+# queue backend configuration
+queue:
+  backend: rabbitmq
+  virtual_host:  aiomessaging
+# key-value storage configuration
+kvstore:
+  backend: dummy
+events:
+  example_event:
+    event_pipeline:  # sequentual
+      - tests.tmp.ExampleFilter
+      - tests.tmp.ExampleFilter:
+        example_kwarg: 1
+    generators:
+      - tests.tmp.OneMessage
+    message_pipeline:
+      - tests.tmp.ExampleFilter
+    delivery:
+      - tests.tmp.DeliveryBackend

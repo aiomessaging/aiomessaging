@@ -1,0 +1,54 @@
+from ..event import Event
+from ..exceptions import DropException, DelayException
+
+from .base import EventTypedConsumer
+
+
+class EventConsumer(EventTypedConsumer):
+
+    """Event consumer.
+
+    Recieve messages from inbound queue, pass it though event pipeline,
+    generate messages using generation pipeline.
+    """
+
+    queue_prefix = "aiomessaging.events"
+
+    def __init__(self, *args, event_pipeline, generators, cluster,
+                 queue_service, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.pipeline = event_pipeline
+        self.generators = generators
+        self.cluster = cluster
+        self.queue_service = queue_service
+
+    async def handler(self, message):
+        self.log.debug("message received: %s", message)
+        event = message
+        try:
+            await self.handle_event(event)
+        except DropException:
+            pass
+        except DelayException:
+            pass
+        # message.ack()
+
+    async def handle_event(self, event: Event):
+        event = await self.pipeline(event)
+        await self.generate_messages(event)
+
+    async def generate_messages(self, event: Event):
+        # start generators and pass tmp queue to them
+        # wait them to finish
+        self.log.debug("Generate messages for event %s", event)
+        tmp_queue = await self.queue_service.generation_queue(self.event_type)
+        self.log.debug('Tmp queue: %s', tmp_queue)
+        await self.generators(tmp_queue, event)
+        # TODO: check generator results. Stop if failed.
+        await self.start_consume(tmp_queue)
+        tmp_queue.close()  # FIXME: remove??
+
+    async def start_consume(self, queue):
+        """ Start consume queue with generated messages
+        """
+        await self.cluster.start_consume(queue.name)

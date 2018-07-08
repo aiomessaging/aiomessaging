@@ -1,6 +1,6 @@
 -r requirements.txt
 
-ipdb
+ipdb==0.11
 
 pytest
 pytest-cov

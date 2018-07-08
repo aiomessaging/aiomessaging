@@ -8,6 +8,7 @@ pytest-watch
 pytest-asyncio
 pytest-benchmark
 pytest_flakes
+codecov
 
 aiomonitor
 

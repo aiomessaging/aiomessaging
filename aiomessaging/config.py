@@ -81,7 +81,3 @@ class Config(BaseConfig):
         backend_name = conf.pop('backend')
         assert backend_name == 'rabbitmq', "No other choice for a while"
         return QueueBackend(**conf)
-
-    def is_aiomonitor_enabled(self):
-        # FIXME: only for debug
-        return True

@@ -2,11 +2,6 @@ import os
 import asyncio
 import logging
 
-try:
-    import aiomonitor
-except ImportError:  # pragma: no cover
-    pass  # pragma: no cover
-
 from .config import Config
 from .consumers import EventConsumer
 from .consumers import GenerationConsumer
@@ -58,9 +53,6 @@ class AiomessagingApp(object):
 
         self.loop.run_until_complete(self._start())
 
-        if self.config.is_aiomonitor_enabled():
-            monitor = aiomonitor.Monitor(loop=self.loop)
-            monitor.start()
         try:
             self.log.info("aiomessaging service was started. PID: %i",
                           os.getpid())
@@ -72,8 +64,6 @@ class AiomessagingApp(object):
             try:
                 self.loop.run_until_complete(self.shutdown())
                 self.loop.run_until_complete(self.loop.shutdown_asyncgens())
-                if self.config.is_aiomonitor_enabled():
-                    monitor.close()
                 self.loop.close()
                 self.log.info("Loop closed.")
             except KeyboardInterrupt:  # pragma: no cover

@@ -5,7 +5,7 @@ else
 endif
 
 export PYTHONPATH=.
-PYTEST_PARAMS=--cov-report=term-missing --cov aiomessaging
+PYTEST_COV_PARAMS=--cov-report=term-missing --cov aiomessaging
 
 clean: pyclean
 	rabbitmqctl stop_app
@@ -16,16 +16,16 @@ pyclean:
 	find . -type d -name "__pycache__" -delete
 
 test: pyclean
-	pytest ${PYTEST_PARAMS}
+	pytest ${PYTEST_COV_PARAMS}
 
 test-s:
-	pytest ${PYTEST_PARAMS} -s
+	pytest -s
 
 test-x:
-	pytest ${PYTEST_PARAMS} -x
+	pytest -x
 
 test-watch:
-	ptw -- ${PYTEST_PARAMS}
+	ptw -- --testmon
 
 run:
 	python -m aiomessaging.app

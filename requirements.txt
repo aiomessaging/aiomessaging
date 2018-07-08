@@ -1,6 +1,0 @@
-python-daemon==2.1.2
-attrdict==2.0.0
-PyYAML==3.13
-ujson==1.35
-termcolor==1.1.0
-pika==0.12.0

@@ -23,6 +23,12 @@ pytest-flakes = "*"
 codecov = "*"
 "flake8" = "*"
 pytest-testmon = "*"
+pylint = "*"
+mypy = "*"
+astroid = "==2.0.0.dev4"
 
 [requires]
 python_version = "3.7"
+
+[pipenv]
+allow_prereleases = true

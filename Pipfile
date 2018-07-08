@@ -1,0 +1,27 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+python-daemon = "*"
+attrdict = "*"
+ujson = "*"
+termcolor = "*"
+pika = "*"
+PyYAML = "*"
+
+[dev-packages]
+ipdb = "*"
+ipython = "*"
+pytest = "*"
+pytest-cov = "*"
+pytest-watch = "*"
+pytest-asyncio = "*"
+pytest-benchmark = "*"
+pytest-flakes = "*"
+codecov = "*"
+"flake8" = "*"
+
+[requires]
+python_version = "3.7"

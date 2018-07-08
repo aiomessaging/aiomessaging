@@ -1,3 +1,8 @@
+[![Build Status](https://travis-ci.org/aiomessaging/aiomessaging.svg?branch=master)](https://travis-ci.org/aiomessaging/aiomessaging)
+
+[![codecov](https://codecov.io/gh/aiomessaging/aiomessaging/branch/master/graph/badge.svg)](https://codecov.io/gh/aiomessaging/aiomessaging)
+
+
 # aiomessaging
 
 Python asyncio messaging platform.

@@ -25,7 +25,8 @@ async def test_start(event_loop: asyncio.AbstractEventLoop, caplog):
     queue = await backend.events_queue('example')
 
     consumer = EventConsumer(
-        'example', loop=event_loop,
+        event_type='example',
+        loop=event_loop,
         event_pipeline=pipeline,
         generators=generators,
         cluster=cluster,

@@ -13,8 +13,9 @@ class MessageConsumer(BaseMessageConsumer):
     type + backend combination).
     """
 
-    def __init__(self, event_type, *args, router, output_queue, **kwargs):
-        super().__init__(event_type, *args, **kwargs)
+    def __init__(self, event_type, router, output_queue, **kwargs):
+        super().__init__(**kwargs)
+        self.event_type = event_type
         self.router = router
         self.output_queue = output_queue
         self.log.info("MessageConsumer started to consume %s", self.queue)

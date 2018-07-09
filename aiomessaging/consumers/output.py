@@ -8,6 +8,10 @@ from .base import BaseMessageConsumer
 class OutputConsumer(BaseMessageConsumer):
     """Output consumer.
     """
+    def __init__(self, event_type, **kwargs):
+        super().__init__(**kwargs)
+        self.event_type = event_type
+
     async def handle_message(self, message: Message):
         """
         1. Try send message thought backend

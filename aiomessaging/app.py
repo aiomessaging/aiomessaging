@@ -166,7 +166,7 @@ class AiomessagingApp:
             generators = self.config.get_generators(event_type)
 
             self.event_consumers[event_type] = EventConsumer(
-                event_type,
+                event_type=event_type,
                 event_pipeline=event_pipeline,
                 generators=generators,
                 cluster=self.cluster,
@@ -199,7 +199,7 @@ class AiomessagingApp:
         for event_type in self.event_types():
             queue = await self.queue.output_queue(event_type)
             self.output_consumers[event_type] = OutputConsumer(
-                event_type,
+                event_type=event_type,
                 queue=queue,
                 loop=self.loop
             )

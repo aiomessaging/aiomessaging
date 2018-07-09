@@ -2,7 +2,7 @@ import asyncio
 import pytest
 
 from aiomessaging.queues import QueueBackend
-from aiomessaging.consumers.base import BaseConsumer
+from aiomessaging.consumers.base import SingleQueueConsumer
 
 from .helpers import has_log_message, send_test_message, log_count
 
@@ -16,7 +16,11 @@ async def test_simple(event_loop, caplog):
     """
     event_loop.set_debug(True)
 
-    class ExampleConsumer(BaseConsumer):
+    class ExampleConsumer(SingleQueueConsumer):
+        """Consumer with counter.
+
+        Counts received messages in `self.counter`.
+        """
         queue_name = 'aiomessaging.tests'
         counter = 0
 
@@ -32,7 +36,7 @@ async def test_simple(event_loop, caplog):
     connection = backend.connection
     queue = await backend.get_queue('example_queue')
 
-    consumer = ExampleConsumer(queue, event_loop)
+    consumer = ExampleConsumer(queue=queue, loop=event_loop)
     await consumer.start()
 
     await send_test_message(connection, "example_queue")
@@ -54,7 +58,12 @@ async def test_fail(event_loop, caplog):
 
     Consumer must log error.
     """
-    class ExampleFailHandler(BaseConsumer):
+    # pylint: disable=abstract-method
+    class ExampleFailHandler(SingleQueueConsumer):
+        """Consumer with failing _handler.
+
+        Always fails with Exception.
+        """
         def _handler(self, channel, basic_deliver, properties, body):
             raise Exception("exception from _handler")
 
@@ -62,7 +71,7 @@ async def test_fail(event_loop, caplog):
     await backend.connect()
     queue = await backend.get_queue('aiomessaging.tests')
 
-    consumer = ExampleFailHandler(queue, event_loop)
+    consumer = ExampleFailHandler(queue=queue, loop=event_loop)
     await consumer.start()
 
     await send_test_message(None)

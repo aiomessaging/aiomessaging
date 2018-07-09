@@ -2,9 +2,21 @@ import asyncio
 import pytest
 
 from aiomessaging.queues import QueueBackend
-from aiomessaging.consumers.base import SingleQueueConsumer
+from aiomessaging.consumers.base import BaseConsumer, SingleQueueConsumer
 
-from .helpers import has_log_message, send_test_message, log_count
+from .helpers import send_test_message, log_count
+
+
+class CounterConsumerMixin:
+    """Consumer with counter for tests.
+
+    Counts received messages in `self.counter`.
+    """
+    counter = 0
+
+    async def handler(self, message):
+        await asyncio.sleep(0)
+        self.counter += 1
 
 
 @pytest.mark.asyncio
@@ -14,21 +26,13 @@ async def test_simple(event_loop, caplog):
     Start consumer, send message, check that message
     succesfully delivered to handler method.
     """
-    event_loop.set_debug(True)
 
-    class ExampleConsumer(SingleQueueConsumer):
-        """Consumer with counter.
-
-        Counts received messages in `self.counter`.
+    class CounterConsumer(CounterConsumerMixin, SingleQueueConsumer):
+        """Counter consumer (single queue interface)
         """
-        queue_name = 'aiomessaging.tests'
-        counter = 0
+        pass
 
-        async def handler(self, message):
-            print("Handler")
-            await asyncio.sleep(0)
-            # message.ack()
-            self.counter += 1
+    event_loop.set_debug(True)
 
     backend = QueueBackend(loop=event_loop)
     await backend.connect()
@@ -36,7 +40,7 @@ async def test_simple(event_loop, caplog):
     connection = backend.connection
     queue = await backend.get_queue('example_queue')
 
-    consumer = ExampleConsumer(queue=queue, loop=event_loop)
+    consumer = CounterConsumer(queue=queue, loop=event_loop)
     await consumer.start()
 
     await send_test_message(connection, "example_queue")
@@ -81,7 +85,41 @@ async def test_fail(event_loop, caplog):
 
     await consumer.stop()
 
-    assert has_log_message(caplog, "exception from _handler", "ERROR")
     assert log_count(caplog, level="ERROR") == 1
 
     await backend.close()
+
+
+@pytest.mark.asyncio
+async def test_consume_multiple_queues(event_loop, caplog):
+    """Consume multiple queues and check delivery.
+    """
+
+    class CounterConsumerMultiple(CounterConsumerMixin, BaseConsumer):
+        """Counter consumer (multiple queue interface).
+
+        Count messages from all consumed queues in `self.counter`.
+        """
+        pass
+
+    backend = QueueBackend(loop=event_loop)
+    await backend.connect()
+    queue_1 = await backend.get_queue('test_mult_1')
+    queue_2 = await backend.get_queue('test_mult_2')
+
+    consumer = CounterConsumerMultiple(loop=event_loop)
+    await consumer.start()
+    consumer.consume(queue_1)
+    consumer.consume(queue_2)
+
+    await send_test_message(backend.connection, "test_mult_1")
+    await send_test_message(backend.connection, "test_mult_2")
+    # allow message to be consumed
+    # TODO: wait for somthing specific
+    await asyncio.sleep(1)
+
+    assert consumer.counter == 2
+
+    assert log_count(caplog, level="ERROR") == 0
+
+    backend.close()

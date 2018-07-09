@@ -22,6 +22,7 @@ class AiomessagingApp:
     queue: QueueBackend
     config: Config
 
+    generation_consumer: GenerationConsumer
     generation_listener = None
     generation_monitor: asyncio.Task
 
@@ -111,21 +112,22 @@ class AiomessagingApp:
         Creates consumer for generated messages when cluster event recieved.
         """
         self.log.info("Listen clusters generation queue")
+
+        messages_queue = await self.queue.messages_queue(
+            'example_event'
+        )
+        self.generation_consumer = GenerationConsumer(
+            messages_queue=messages_queue, loop=self.loop
+        )
+        await self.generation_consumer.start()
+
         while True:
             queue_name = await self.cluster.generation_queue.get()
             self.log.info('Message in generation_queue %s', queue_name)
             queue = await self.queue.generation_queue(name=queue_name)
-            # TODO: we need a correct type
-            messages_queue = await self.queue.messages_queue(
-                'example_event'
-            )
-            gen = GenerationConsumer(
-                queue=queue, messages_queue=messages_queue,
-                loop=self.loop
-            )
-            await gen.start()
-            self.started_generators.append(gen)
+            self.generation_consumer.consume(queue)
 
+    # FIXME: move me to the generation consumer
     async def monitor_generation(self):
         """Generation monitoring coroutine.
         """

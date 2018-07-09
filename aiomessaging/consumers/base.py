@@ -50,6 +50,8 @@ class BaseConsumer:
         """
         queue.consume(self._handler)
 
+    consume = _consume
+
     async def _monitoring(self):
         while self.running:
             for task in self.msg_tasks:

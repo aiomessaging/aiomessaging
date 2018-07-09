@@ -5,11 +5,10 @@ import asyncio
 
 from ..message import Message
 
-from .base import MessageConsumerMixIn, SingleQueueConsumer
+from .base import MessageConsumerMixIn, BaseConsumer
 
 
-# FIXME: consume multiple
-class GenerationConsumer(MessageConsumerMixIn, SingleQueueConsumer):
+class GenerationConsumer(MessageConsumerMixIn, BaseConsumer):
 
     """Generation consumer.
 

@@ -10,11 +10,17 @@ from aiomessaging.queues import QueueBackend
 async def test_simple(event_loop):
     backend = QueueBackend()
     await backend.connect()
-    queue = await backend.generation_queue(name='example_queue')
     messages_queue = await backend.messages_queue('example_event')
     consumer = GenerationConsumer(
-        queue=queue, messages_queue=messages_queue, loop=event_loop,
+        messages_queue=messages_queue, loop=event_loop,
     )
+
+    queue = await backend.generation_queue(name='example_queue')
+    consumer.consume(queue)
+
+    queue2 = await backend.generation_queue(name='example_queue2')
+    consumer.consume(queue2)
+
     event = Event('example')
     message = Message(event=event)
     await consumer.handle_message(message)

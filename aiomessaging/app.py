@@ -24,7 +24,6 @@ class AiomessagingApp:
 
     generation_consumer: GenerationConsumer
     generation_listener = None
-    generation_monitor: asyncio.Task
 
     log: logging.Logger
 
@@ -32,7 +31,6 @@ class AiomessagingApp:
         self.event_consumers = {}
         self.message_consumers = {}
         self.output_consumers = {}
-        self.started_generators = []
         self.loop = loop
 
         self.set_event_loop(loop)
@@ -97,11 +95,9 @@ class AiomessagingApp:
         exchange = await self.queue.cluster_queue()
         self.cluster = Cluster(queue=queue, exchange=exchange, loop=self.loop)
         await self.cluster.start()
+
         self.generation_listener = self.loop.create_task(
             self.listen_generation()
-        )
-        self.generation_monitor = self.loop.create_task(
-            self.monitor_generation()
         )
 
     async def listen_generation(self):
@@ -127,24 +123,10 @@ class AiomessagingApp:
             queue = await self.queue.generation_queue(name=queue_name)
             self.generation_consumer.consume(queue)
 
-    # FIXME: move me to the generation consumer
-    async def monitor_generation(self):
-        """Generation monitoring coroutine.
-        """
-        self.log.debug("Start generators monitoring")
-        while True:
-            for gen in self.started_generators:
-                if not gen.running:
-                    self.log.debug('Free ended generator')
-                    self.started_generators.remove(gen)
-                    del gen
-            await asyncio.sleep(1)
-
     async def stop_listen_generation(self):
         """Stop listen for generation queues.
         """
         self.generation_listener.cancel()
-        self.generation_monitor.cancel()
         # handle errors from listen_generation
         try:
             exc = None
@@ -155,10 +137,6 @@ class AiomessagingApp:
         if exc:  # pragma: no cover
             self.log.error("Generation listner exception found %s.", exc)
             raise exc
-
-        for item in self.started_generators:
-            await item.stop()
-        self.log.info('Stop %s gens', len(self.started_generators))
 
     async def create_event_consumers(self):
         """Create consumers for each event type.

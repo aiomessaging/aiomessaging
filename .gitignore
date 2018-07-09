@@ -10,4 +10,7 @@ docs/_build
 .mypy_cache
 .testmon*
 
+build
+dist
+
 TODO

@@ -26,6 +26,7 @@ pytest-testmon = "*"
 pylint = "*"
 mypy = "*"
 astroid = "==2.0.0.dev4"
+twine = "*"
 
 [requires]
 python_version = "3.7"

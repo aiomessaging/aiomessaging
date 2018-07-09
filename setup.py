@@ -1,6 +1,7 @@
+# pylint: disable-all
 """aiomessaging package.
 """
-import setuptools
+import setuptools  # noqa
 from distutils.core import setup
 
 

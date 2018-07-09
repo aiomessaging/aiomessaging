@@ -263,4 +263,5 @@ class Queue:
     def __repr__(self):
         """Queue representation.
         """
-        return f'<Queue (name={self.name};exchange={self.exchange};routing_key={self.routing_key}>'
+        return (f'<Queue (name={self.name};exchange={self.exchange};'
+                f'routing_key={self.routing_key}>')

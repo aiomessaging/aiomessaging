@@ -3,6 +3,9 @@
 import logging
 import asyncio
 
+from functools import partial
+from abc import ABC, abstractmethod
+
 import pika
 import ujson
 
@@ -10,8 +13,43 @@ import ujson
 logger = logging.getLogger(__name__)
 
 
+class AbstractQueue(ABC):
+
+    """Abstract Queue.
+
+    This interface must be implemented for each queue backend and must hide
+    undelaying backend-specific implementation.
+
+    Only one consumer allowed per queue by design.
+    """
+
+    @abstractmethod
+    def consume(self, handler) -> None:
+        """Start consume messages.
+
+        Passed handler will be invoked when new message recieved.
+        """
+        pass
+
+    @abstractmethod
+    def cancel(self) -> asyncio.Future:
+        """Cancel consume queue.
+
+        Gracefully stop consumption and close connection without any message
+        loss. Queue responsible for unacked messages return and their
+        persistance on the backend. Hides details from consumer.
+
+        Return `Future` that will be resolved after succesful cancellation.
+        """
+        pass
+
+    # # FIXME
+    # async def publish(self) -> Coroutine:
+    #     pass
+
+
 # pylint: disable=too-many-instance-attributes
-class Queue:
+class Queue(AbstractQueue):
 
     """Queue.
 
@@ -133,13 +171,14 @@ class Queue:
         """Start consume queue.
 
         You must pass handler to start consume.
-
-        TODO: only one consumer per queue allowed in case of reconnect
         """
+        bounded_handler = partial(handler, self)
         self._consume_handler = handler
         self.log.info("%s: Start consume", self.name)
-        self._channel.add_on_close_callback(self.on_channel_closed)
-        self._consumer_tag = self._channel.basic_consume(handler,
+        self._channel.add_on_close_callback(
+            self.on_channel_closed
+        )
+        self._consumer_tag = self._channel.basic_consume(bounded_handler,
                                                          self.name)
         self.log.info("Consumer tag (%s) %s", id(self), self._consumer_tag)
 
@@ -249,11 +288,18 @@ class Queue:
         try:
             if self._consumer_tag:
                 self._channel.basic_cancel(
-                    self.on_cancelok, self._consumer_tag)
-            if self._channel and self._channel.is_open:
-                self._channel.close()
+                    self.on_cancelok,
+                    self._consumer_tag
+                )
+            else:
+                self.log.debug("No consumer tag defined, nothing to cancel")
         except pika.exceptions.ChannelClosed:
-            pass
+            self.log.debug('Trying to cancel')
+
+    def cancel(self):
+        """Stop consume messages from queue.
+        """
+        pass
 
     def on_cancelok(self, *args, **kwargs):
         """Handle cancelok.

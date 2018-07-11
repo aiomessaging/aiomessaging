@@ -2,65 +2,58 @@
 """
 import time
 import asyncio
+from typing import Dict
 
 from ..message import Message
+from ..queues import AbstractQueue
 
 from .base import MessageConsumerMixIn, BaseConsumer
+
+
+QUEUE_FORGET_TIMEOUT = 1
 
 
 class GenerationConsumer(MessageConsumerMixIn, BaseConsumer):
 
     """Generation consumer.
 
-    Recive message from tmp generation queue and places them to the output
-    queue `messages.<type>`. Created by messaging app on cluster signal.
-
-    Produce additional `_monitor_generation` coro which looks for queue end and
-    periodically exams last handling time to recognize this.
+    Recive message from tmp generation queue and place them to the provided
+    messages queue.
     """
 
-    monitor_gen_task = None
+    # messages from tmp generation queue will be drained to this queue
+    messages_queue: AbstractQueue
 
-    def __init__(self, messages_queue, **kwargs):
+    # last received message time for each consumed queue
+    last_recived_time: Dict[AbstractQueue, int]
+
+    _consumer_monitoring_task: asyncio.Task
+
+    def __init__(self, messages_queue: AbstractQueue, **kwargs) -> None:
         super().__init__(**kwargs)
         self.messages_queue = messages_queue
+        self.last_recived_time = {}
         self.last_time = time.time()
+
+        self._consumer_monitoring_task = None
 
     async def start(self):
+        """Start generation consumer.
+
+        Also starts monitoring task.
+        """
         await super().start()
-        self.monitor_gen_task = self.loop.create_task(
-            self._monitor_generation()
-        )
+        self._start_consumer_monitoring()
 
     async def stop(self):
-        self.log.info("Stopping")
+        """Stop generation consumer.
 
-        # pylint: disable=protected-access
-        if self.messages_queue._backend.is_open:
-            self.messages_queue.close()
-
-        if self.monitor_gen_task:
-            self.monitor_gen_task.cancel()
-            try:
-                exc = None
-                await asyncio.wait_for(self.monitor_gen_task, 5)
-                exc = self.monitor_gen_task.exception()
-                if exc:
-                    raise exc
-            except asyncio.InvalidStateError:
-                pass
-            except AttributeError:
-                pass
-            except asyncio.CancelledError:
-                pass
-            if exc:
-                self.log.error(
-                    'Exception found in generation monitor task %s', type(exc)
-                )
+        Also stop generation task.
+        """
         await super().stop()
+        await self._stop_consumer_monitoring()
 
     async def handle_message(self, message: Message):
-        self.last_time = time.time()
         self.log.debug("Generated message recieved %s", message)
         await self.send_output(message)
 
@@ -74,14 +67,48 @@ class GenerationConsumer(MessageConsumerMixIn, BaseConsumer):
         self.log.debug("Generated message passed to output exchange %s",
                        self.messages_queue)
 
-    async def _monitor_generation(self):
+    def consume(self, queue):
+        """Start consume provided queue.
+        """
+        super().consume(queue)
+        self.last_recived_time[queue] = time.time()
+
+    def cancel(self, queue):
+        """Stop consume provided queue.
+        """
+        super().cancel(queue)
+        del self.last_recived_time[queue]
+
+    # pylint: disable=arguments-differ
+    def _handler(self, queue, *args, **kwargs):
+        """Generation queue handler.
+
+        Catch queue argument and update last message time for this queue.
+        """
+        self.last_recived_time[queue] = time.time()
+        super()._handler(queue, *args, **kwargs)
+
+    def _start_consumer_monitoring(self):
+        """Start monitoring task.
+        """
+        self._consumer_monitoring_task = self.loop.create_task(
+            self._consumer_monitoring()
+        )
+
+    async def _stop_consumer_monitoring(self):
+        """Cancel monitoring task.
+        """
+        if self._consumer_monitoring_task:
+            await self._consumer_monitoring_task
+        else:
+            self.log.info('No logs at all')
+
+    async def _consumer_monitoring(self):
+        """Consumer monitoring coroutine.
+        """
         while self.running:
-            time_diff = time.time() - self.last_time
-            if time_diff > 1:
-                self.log.debug(
-                    "Queue %s seems empty. Stop generation consumer",
-                    self.messages_queue.name
-                )
-                await self.stop()
-                break
-            await asyncio.sleep(0.1)
+            for queue, last_time in self.last_recived_time.copy().items():
+                if time.time() - last_time > QUEUE_FORGET_TIMEOUT:
+                    self.cancel(queue)
+                    self.log.info('Queue cancelled by monitoring %s', queue)
+            await asyncio.sleep(1)

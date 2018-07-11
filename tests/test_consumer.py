@@ -65,7 +65,7 @@ async def test_fail(event_loop, caplog):
 
         Always fails with Exception.
         """
-        def _handler(self, channel, basic_deliver, properties, body):
+        def _handler(self, queue, channel, basic_deliver, properties, body):
             raise Exception("exception from _handler")
 
     backend = QueueBackend(loop=event_loop)

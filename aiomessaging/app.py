@@ -126,17 +126,8 @@ class AiomessagingApp:
     async def stop_listen_generation(self):
         """Stop listen for generation queues.
         """
+        await self.generation_consumer.stop()
         self.generation_listener.cancel()
-        # handle errors from listen_generation
-        try:
-            exc = None
-            exc = self.generation_listener.exception()
-            await asyncio.wait_for(self.generation_listener, 5)
-        except asyncio.InvalidStateError:
-            pass
-        if exc:  # pragma: no cover
-            self.log.error("Generation listner exception found %s.", exc)
-            raise exc
 
     async def create_event_consumers(self):
         """Create consumers for each event type.

@@ -22,9 +22,8 @@ class BaseConsumer:
     task: asyncio.Task
     monitoring_task: asyncio.Task
 
-    def __init__(self, queue, loop, debug=False):
+    def __init__(self, loop, debug=False):
         self.loop = loop
-        self.queue = queue
         self.debug = debug
 
         self.msg_tasks = []
@@ -43,15 +42,15 @@ class BaseConsumer:
         """Start consumer and monitoring tasks.
         """
         self.running = True
-        self._consume()
-        self.monitoring_task = self.loop.create_task(self._monitoring())
 
-    def _consume(self):
+    def _consume(self, queue):
         """Consume coroutine.
 
         Create task for incoming message.
         """
-        self.queue.consume(self._handler)
+        queue.consume(self._handler)
+
+    consume = _consume
 
     async def _monitoring(self):
         while self.running:
@@ -87,7 +86,7 @@ class BaseConsumer:
         """
         self.running = False
         self.log.info('Stop consumer')
-        self.queue.close()
+        # self.queue.close()
 
         await asyncio.sleep(0)
 
@@ -95,7 +94,7 @@ class BaseConsumer:
             await asyncio.wait_for(self.monitoring_task, 2)
             self.log.info("Monitor task cancelled")
 
-        self.queue.close()
+        # self.queue.close()
 
         if getattr(self, 'task', False):
             self.log.info("Graceful consumer shutdown")
@@ -142,16 +141,19 @@ class BaseConsumer:
 class SingleQueueConsumer(BaseConsumer):
     """Single queue consumer.
     """
-    pass
+    def __init__(self, queue, **kwargs):
+        super().__init__(**kwargs)
+        self.queue = queue
 
+    async def start(self):
+        await super().start()
+        self.consume_default()
 
-# pylint: disable=abstract-method
-class EventTypedConsumer(BaseConsumer):
-    """Event typed consumer.
-    """
-    def __init__(self, event_type, *, queue, loop):
-        self.event_type = event_type
-        super().__init__(queue=queue, loop=loop)
+    def consume_default(self):
+        """Consume default queue.
+        """
+        self._consume(self.queue)
+        self.monitoring_task = self.loop.create_task(self._monitoring())
 
 
 class MessageConsumerMixIn:
@@ -173,7 +175,7 @@ class MessageConsumerMixIn:
         raise NotImplementedError  # pragma: no cover
 
 
-class BaseMessageConsumer(MessageConsumerMixIn, EventTypedConsumer):
+class BaseMessageConsumer(MessageConsumerMixIn, SingleQueueConsumer):
 
     """Message consumer.
 

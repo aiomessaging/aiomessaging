@@ -3,10 +3,10 @@
 import asyncio
 
 
-from .consumers.base import BaseConsumer
+from .consumers.base import SingleQueueConsumer
 
 
-class Cluster(BaseConsumer):
+class Cluster(SingleQueueConsumer):
     """aiomessaging Cluster.
 
     Provide interface to other cluster instances.

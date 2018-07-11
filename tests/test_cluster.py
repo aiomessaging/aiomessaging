@@ -1,4 +1,3 @@
-import asyncio
 import pytest
 
 from aiomessaging.cluster import Cluster
@@ -19,15 +18,11 @@ async def test_handle_action(event_loop, caplog):
     cluster = Cluster(queue=queue, exchange=exchange, loop=event_loop)
     await cluster.start()
 
-    # allow switch to consume coros
-    await asyncio.sleep(0.1)
-
     # send message and wait some time
     await send_test_message(queues.connection, queue_name=queue.name, body={
         "action": "consume",
         "queue_name": "example"
     })
-    await asyncio.sleep(1)  # TODO: wait for something specific
 
     await cluster.stop()
 
@@ -58,18 +53,13 @@ async def test_invalid_action(event_loop, caplog):
     cluster = Cluster(queue=queue, exchange=exchange, loop=event_loop)
     await cluster.start()
 
-    # allow switch to consume coros
-    await asyncio.sleep(0.1)
-
     # send message and wait some time
     await send_test_message(queues.connection, queue_name=queue.name, body={
         "action": "invalid_action",
         "queue_name": "example"
     })
-    await asyncio.sleep(1)
 
     await cluster.stop()
-    await asyncio.sleep(0.1)
 
     # cluster generation queue (results of "consume" action)
     gen_queue = cluster.generation_queue

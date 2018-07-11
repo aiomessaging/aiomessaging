@@ -13,7 +13,7 @@ class GenerationConsumer(MessageConsumerMixIn, BaseConsumer):
     """Generation consumer.
 
     Recive message from tmp generation queue and places them to the output
-    queue `messages.<type>`. Created by  AiomessagingApplication` on cluster signal.
+    queue `messages.<type>`. Created by messaging app on cluster signal.
 
     Produce additional `_monitor_generation` coro which looks for queue end and
     periodically exams last handling time to recognize this.

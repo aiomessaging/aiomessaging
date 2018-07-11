@@ -3,10 +3,10 @@
 from ..event import Event
 from ..exceptions import DropException, DelayException
 
-from .base import EventTypedConsumer
+from .base import SingleQueueConsumer
 
 
-class EventConsumer(EventTypedConsumer):
+class EventConsumer(SingleQueueConsumer):
 
     """Event consumer.
 
@@ -16,9 +16,11 @@ class EventConsumer(EventTypedConsumer):
 
     queue_prefix = "aiomessaging.events"
 
-    def __init__(self, *args, event_pipeline, generators, cluster,
+    # pylint: disable=too-many-arguments
+    def __init__(self, event_type, event_pipeline, generators, cluster,
                  queue_service, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
+        self.event_type = event_type
         self.pipeline = event_pipeline
         self.generators = generators
         self.cluster = cluster

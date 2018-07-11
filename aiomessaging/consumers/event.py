@@ -16,6 +16,7 @@ class EventConsumer(SingleQueueConsumer):
 
     queue_prefix = "aiomessaging.events"
 
+    # pylint: disable=too-many-arguments
     def __init__(self, event_type, event_pipeline, generators, cluster,
                  queue_service, **kwargs):
         super().__init__(**kwargs)

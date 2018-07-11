@@ -39,7 +39,6 @@ async def test_start(event_loop: asyncio.AbstractEventLoop, caplog):
         queue_name='aiomessaging.tests.event_consumer.example',
         body={'type': 'example', 'a': 1}
     )
-    await asyncio.sleep(1)  # time to consume a message
     await consumer.stop()
     await cluster.stop()
     await backend.close()

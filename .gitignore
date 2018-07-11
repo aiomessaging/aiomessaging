@@ -13,4 +13,6 @@ docs/_build
 build
 dist
 
+Pipfile*
+
 TODO

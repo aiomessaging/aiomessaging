@@ -43,7 +43,7 @@ class AbstractQueue(ABC):
         """
         pass
 
-    # # FIXME
+    # # TODO
     # async def publish(self) -> Coroutine:
     #     pass
 

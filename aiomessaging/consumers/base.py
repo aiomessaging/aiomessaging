@@ -106,8 +106,8 @@ class BaseConsumer:
                 if task.done():
                     self.msg_tasks.remove(task)
                     del task
-            # FIXME: GenerationConsumer._monitor_generation() pending task was
-            #        destroyed warning printed to logs with shorter sleep.
+            # TODO: GenerationConsumer._monitor_generation() pending task was
+            #       destroyed warning printed to logs with shorter sleep.
 
     # pylint: disable=unused-argument,too-many-arguments
     def _handler(self, queue, channel, basic_deliver, properties, body):

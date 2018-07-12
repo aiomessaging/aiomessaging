@@ -106,6 +106,8 @@ class QueueBackend:
         self._channel_opening = self._create_future()
 
         def on_channel(channel: pika.channel.Channel):
+            """On channel closed handler.
+            """
             self.log.debug('Channel opened')
             channel.add_on_close_callback(self.on_channel_closed)
             self.log.debug('CHANNEL%i: open', channel.channel_number)
@@ -142,6 +144,8 @@ class QueueBackend:
         self._channel_publish_opening = self._create_future()
 
         def on_channel(channel: pika.channel.Channel):
+            """On channel opened handler.
+            """
             self.log.debug('Channel opened')
             channel.add_on_close_callback(self.on_channel_closed)
             self.log.debug('CHANNEL%i: open', channel.channel_number)

@@ -45,6 +45,7 @@ setup(
             'commonmark',
             'pytest',
             'pytest-cov',
+            'pytest-asyncio',
             'mypy',
             'pylint'
         ]

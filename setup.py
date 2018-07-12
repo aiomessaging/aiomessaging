@@ -42,7 +42,11 @@ setup(
     extras_require={
         'dev': [
             'Sphinx',
-            'commonmark'
+            'commonmark',
+            'pytest',
+            'pytest-cov',
+            'mypy',
+            'pylint'
         ]
     }
 )

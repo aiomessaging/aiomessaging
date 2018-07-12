@@ -5,11 +5,11 @@ python:
 services:
   - rabbitmq
 install:
-  - pip install pipenv
-  - pipenv install --dev
+  - pip install -e .[dev]
+  - pip install codecov
 script:
-  - pipenv run pytest --cov-report=term-missing --cov aiomessaging
-  - pipenv run mypy aiomessaging --ignore-missing-imports
-  - pipenv run pylint aiomessaging
+  - pytest --cov-report=term-missing --cov aiomessaging
+  - mypy aiomessaging --ignore-missing-imports
+  - pylint aiomessaging
 after_success:
   - codecov

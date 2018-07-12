@@ -43,9 +43,12 @@ class AbstractQueue(ABC):
         """
         pass
 
-    # # TODO
-    # async def publish(self) -> Coroutine:
-    #     pass
+    async def publish(self, body, routing_key=None):
+        """Publish message to the queue.
+
+        TODO: bad interface
+        """
+        pass
 
 
 # pylint: disable=too-many-instance-attributes

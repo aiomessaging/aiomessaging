@@ -2,7 +2,7 @@
 """
 import time
 import asyncio
-from typing import Dict
+from typing import Dict, Optional
 
 from ..message import Message
 from ..queues import AbstractQueue
@@ -27,7 +27,7 @@ class GenerationConsumer(MessageConsumerMixIn, BaseConsumer):
     # last received message time for each consumed queue
     last_recived_time: Dict[AbstractQueue, int]
 
-    _consumer_monitoring_task: asyncio.Task
+    _consumer_monitoring_task: Optional[asyncio.Task]
 
     def __init__(self, messages_queue: AbstractQueue, **kwargs) -> None:
         super().__init__(**kwargs)

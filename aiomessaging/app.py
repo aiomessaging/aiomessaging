@@ -92,8 +92,7 @@ class AiomessagingApp:
         """Create Cluster instance and start cluster queue handling.
         """
         queue = await self.queue.cluster_queue()
-        exchange = await self.queue.cluster_queue()
-        self.cluster = Cluster(queue=queue, exchange=exchange, loop=self.loop)
+        self.cluster = Cluster(queue=queue, loop=self.loop)
         await self.cluster.start()
 
         self.generation_listener = self.loop.create_task(

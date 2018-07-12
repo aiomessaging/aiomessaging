@@ -18,9 +18,7 @@ class Cluster(SingleQueueConsumer):
 
     generation_queue: asyncio.Queue
 
-    def __init__(self, queue, exchange, loop, **kwargs):
-        self.exchange = exchange
-
+    def __init__(self, queue, loop, **kwargs):
         self.generation_queue = asyncio.Queue(loop=loop)
         self.actions = {
             'consume': self.generation_queue
@@ -57,7 +55,7 @@ class Cluster(SingleQueueConsumer):
     async def start_consume(self, queue_name):
         """Publish message to cluster to start consume queue with generated messages.
         """
-        await self.exchange.publish(
+        await self.queue.publish(
             {'action': 'consume', 'queue_name': queue_name}
         )
         self.log.debug('cluster queue name %s', self.queue.name)

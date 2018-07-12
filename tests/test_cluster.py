@@ -14,8 +14,7 @@ async def test_handle_action(event_loop, caplog):
     await queues.connect()
 
     queue = await queues.cluster_queue()
-    exchange = await queues.cluster_queue()
-    cluster = Cluster(queue=queue, exchange=exchange, loop=event_loop)
+    cluster = Cluster(queue=queue, loop=event_loop)
     await cluster.start()
 
     # send message and wait some time
@@ -48,9 +47,8 @@ async def test_invalid_action(event_loop, caplog):
     await queues.connect()
 
     queue = await queues.cluster_queue()
-    exchange = await queues.cluster_queue()
 
-    cluster = Cluster(queue=queue, exchange=exchange, loop=event_loop)
+    cluster = Cluster(queue=queue, loop=event_loop)
     await cluster.start()
 
     # send message and wait some time

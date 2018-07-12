@@ -47,7 +47,7 @@ setup(
             'pytest-cov',
             'pytest-asyncio',
             'mypy',
-            'pylint'
+            'pylint==2.0.0.dev2'
         ]
     }
 )

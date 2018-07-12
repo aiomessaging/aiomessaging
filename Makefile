@@ -28,7 +28,7 @@ test-watch:
 	ptw -- --testmon
 
 run:
-	python -m aiomessaging.app
+	python -m aiomessaging
 
 send:
 	python send.py

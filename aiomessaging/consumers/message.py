@@ -18,7 +18,6 @@ class MessageConsumer(BaseMessageConsumer):
         self.event_type = event_type
         self.router = router
         self.output_queue = output_queue
-        self.log.info("MessageConsumer started to consume %s", self.queue)
 
     async def handle_message(self, message: Message):
 
@@ -30,6 +29,6 @@ class MessageConsumer(BaseMessageConsumer):
         """
         # output = self.router.select_output(self.event_type, message)
         queue = self.output_queue
-        self.log.debug("Delivery message to %s: %s", queue, message)
+        self.log.debug("Send message to %s: %s", queue.name, message)
         await queue.publish(message.to_dict())
         queue.close()

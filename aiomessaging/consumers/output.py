@@ -14,7 +14,7 @@ class OutputConsumer(BaseMessageConsumer):
 
     async def handle_message(self, message: Message):
         """
-        1. Try send message thought backend
+        1. Try send message through backend
         2. Handle exceptions from backend:
             a. CheckException(delay=X) — send message to delay(X) queue
             b. Retry(delay=X) - send message to delay(X) queue
@@ -23,4 +23,5 @@ class OutputConsumer(BaseMessageConsumer):
             d. NeverDelivered - mark backend as failed and send message back
                to output queue (select next backend in next step)
         """
-        self.log.info("Output is here!!! %s", message)
+        # FIXME: start from here
+        message.log.info("Message in output handler [this is the end for a while]")

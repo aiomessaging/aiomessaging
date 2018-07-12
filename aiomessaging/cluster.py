@@ -29,7 +29,7 @@ class Cluster(SingleQueueConsumer):
     async def handler(self, message):
         """Handle cluster message
         """
-        self.log.info("Cluster message recieved %s", message)
+        self.log.debug("Cluster message recieved %s", message)
 
         self.log.debug("Message body:\n%s", message)
         body = message
@@ -58,5 +58,4 @@ class Cluster(SingleQueueConsumer):
         await self.queue.publish(
             {'action': 'consume', 'queue_name': queue_name}
         )
-        self.log.debug('cluster queue name %s', self.queue.name)
-        self.log.info("tell cluster to start consume %s", queue_name)
+        self.log.debug("tell cluster to start consume %s", queue_name)

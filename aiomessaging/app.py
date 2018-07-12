@@ -3,6 +3,7 @@
 import os
 import asyncio
 import logging
+import logging.config
 
 from .config import Config
 from .consumers import EventConsumer
@@ -40,7 +41,7 @@ class AiomessagingApp:
             self.config.from_file(config)
 
         self.configure_logging()
-        self.log.debug('Configuration file: %s', config)
+        self.log.info('Configuration file: %s', config)
 
         self.queue = self.config.get_queue_backend()
 
@@ -53,6 +54,8 @@ class AiomessagingApp:
     def start(self, loop=None):
         """Start aiomessaging application.
         """
+        self.log.info("aiomessaging service was started. PID: %i",
+                      os.getpid())
         assert self.config is not None, "Config not provided"
 
         self.loop = loop or self.loop or asyncio.get_event_loop()
@@ -61,8 +64,6 @@ class AiomessagingApp:
         self.loop.run_until_complete(self._start())
 
         try:
-            self.log.info("aiomessaging service was started. PID: %i",
-                          os.getpid())
             self.loop.run_forever()
         except KeyboardInterrupt:  # pragma: no cover
             print(" — Ctrl + C was pressed")
@@ -106,7 +107,7 @@ class AiomessagingApp:
 
         Creates consumer for generated messages when cluster event recieved.
         """
-        self.log.info("Listen clusters generation queue")
+        self.log.debug("Listen clusters generation queue")
 
         messages_queue = await self.queue.messages_queue(
             'example_event'
@@ -118,7 +119,7 @@ class AiomessagingApp:
 
         while True:
             queue_name = await self.cluster.generation_queue.get()
-            self.log.info('Message in generation_queue %s', queue_name)
+            self.log.debug('Message in generation_queue %s', queue_name)
             queue = await self.queue.generation_queue(name=queue_name)
             self.generation_consumer.consume(queue)
 
@@ -153,7 +154,7 @@ class AiomessagingApp:
         router = Router()
 
         for event_type in self.event_types():
-            self.log.info("Create event consumer for type %s", event_type)
+            self.log.debug("Create event consumer for type %s", event_type)
             self.message_consumers[event_type] = MessageConsumer(
                 event_type,
                 router=router,
@@ -178,20 +179,81 @@ class AiomessagingApp:
     def configure_logging(self):
         """Configure logging.
         """
-        self.log = logging.getLogger('aiomessaging')
-        # if self.config.app.debug:
-        #     loglevel = logging.INFO
-        # else:
-        #     loglevel = logging.INFO
+        self.log = logging.getLogger(__name__)
         logging.basicConfig(
             format=self.config.get_log_format()
         )
-        self.log.setLevel(logging.DEBUG)
+        # if self.config.app.debug:
+        #     log_level = logging.DEBUG
+        # else:
+        #     log_level = logging.INFO
+        # self.log.setLevel(log_level)
+        logging.config.dictConfig({
+            "version": 1,
+            "disable_existing_loggers": True,
+            "formatters": {
+                "default": {
+                    "class": "logging.Formatter",
+                    "format": self.config.get_log_format()
+                }
+            },
+            "handlers": {
+                "null": {
+                    "level": "DEBUG",
+                    "class": "logging.NullHandler",
+                },
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "formatter": "default"
+                }
+            },
+            "loggers": {
+                "aiomessaging": {
+                    "level": "DEBUG",
+                    "handlers": ["null"],
+                    "propagate": True
+                },
+                "aiomessaging.app": {
+                    "level": "INFO",
+                    "handlers": ["console"],
+                    "propagate": False
+                },
+                "aiomessaging.message": {
+                    "level": "INFO",
+                    "handlers": ["console"],
+                    "propagate": False
+                },
+                "aiomessaging.event": {
+                    "level": "INFO",
+                    "handlers": ["console"],
+                    "propagate": False
+                },
+                "aiomessaging.consumers.base": {
+                    "level": "INFO",
+                    "handlers": ["console"],
+                    "propagate": False
+                },
+                "aiomessaging.queues": {
+                    "level": "INFO",
+                    "handlers": ["console"],
+                    "propagate": False
+                },
+                "aiomessaging.queues.backend": {
+                    "level": "INFO",
+                    "propagate": False
+                }
+            },
+            "root": {
+                "level": "DEBUG",
+                "handlers": ["console"]
+            },
+        })
 
     def set_event_loop(self, loop):
         """Set event loop to run on.
         """
-        self.loop = loop
+        self.loop = loop or asyncio.get_event_loop()
+        self.loop.set_debug(True)
 
     def stop(self):
         """Stop application event loop.
@@ -204,7 +266,6 @@ class AiomessagingApp:
         """
         await self.stop_listen_generation()
         await self.cluster.stop()
-        self.log.debug("Cluster stopped")
 
         await stop_all(self.event_consumers)
         await stop_all(self.message_consumers)
@@ -219,10 +280,3 @@ async def stop_all(consumers):
     """
     # pylint: disable=expression-not-assigned
     [await a.stop() for a in consumers.values()]
-
-
-if __name__ == '__main__':
-    # TODO: remove before release
-    # pylint: disable=invalid-name
-    app = AiomessagingApp('example.yml')  # pragma: no cover
-    app.start()  # pragma: no cover

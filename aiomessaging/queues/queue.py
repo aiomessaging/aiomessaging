@@ -4,10 +4,12 @@ import logging
 import asyncio
 
 from functools import partial
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 
 import pika
 import ujson
+
+from ..logging import QueueLoggerAdapter
 
 
 logger = logging.getLogger(__name__)
@@ -22,6 +24,19 @@ class AbstractQueue(ABC):
 
     Only one consumer allowed per queue by design.
     """
+
+    log: QueueLoggerAdapter
+
+    def __init__(self):
+        self.log = QueueLoggerAdapter(logger, self)
+
+    @abstractproperty
+    def name(self):
+        """Queue name.
+
+        Must be implemented.
+        """
+        raise NotImplementedError()
 
     @abstractmethod
     def consume(self, handler) -> None:
@@ -75,14 +90,14 @@ class Queue(AbstractQueue):
     # pylint: disable=too-many-arguments
     def __init__(self, backend, name=None, exchange=None, exchange_type=None,
                  routing_key=None, auto_delete=True, durable=False):
+        self._name = name
+        super().__init__()
+
         self._backend = backend
-        self.log = logger
 
         self.exchange = exchange
         self.exchange_type = exchange_type
         self.routing_key = routing_key
-
-        self.name = name
 
         self.auto_delete = auto_delete
         self.durable = durable
@@ -94,6 +109,10 @@ class Queue(AbstractQueue):
              "or exchange, exchange_type and routing_key if you want to "
              "publish (to exchange).")
 
+    @property
+    def name(self):
+        return self._name
+
     async def declare(self) -> 'Queue':
         """Declare required queue and exchange.
 
@@ -101,9 +120,9 @@ class Queue(AbstractQueue):
         See `need_declare_queue` and `need_declare_exchange` methods for
         details.
         """
-        self.log.info("Acquire channel for queue %s:%s",
-                      self.exchange, self.name)
         self._channel = await self._backend.channel()
+        self.log.debug("Channel acquired CHANNEL%i",
+                       self._channel.channel_number)
 
         if self.need_declare_exchange():
             await self.declare_exchange()
@@ -124,7 +143,7 @@ class Queue(AbstractQueue):
 
         def on_declare_exchange(frame):
             future.set_result(frame)
-            self.log.debug('Exchange declared ok: %s', self.exchange)
+            self.log.debug('Exchange `%s` declared ok', self.exchange)
 
         self._channel.exchange_declare(
             on_declare_exchange,
@@ -134,7 +153,7 @@ class Queue(AbstractQueue):
 
         return future
 
-    async def declare_queue(self) -> asyncio.Future:
+    def declare_queue(self) -> asyncio.Future:
         """Declare amqp queue.
         """
         # pylint: disable=protected-access
@@ -142,21 +161,20 @@ class Queue(AbstractQueue):
 
         def on_queue_declare(method_frame):
             # TODO: there is a race condition (check)
-            self.name = method_frame.method.queue
+            self._name = method_frame.method.queue
             future.set_result(method_frame)
-            self.log.debug('Declared ok: %s', method_frame)
+            self.log.debug('Declared ok')
 
         self._channel.queue_declare(
             on_queue_declare, self.name, auto_delete=self.auto_delete,
             durable=self.durable
         )
 
-        self.log.debug('Declaring queue: %s, %s:%s',
-                       self.name, self.exchange, self.routing_key)
+        self.log.debug('Declaring queue itself')
 
         return future
 
-    async def bind_queue(self):
+    def bind_queue(self):
         """Bind queue to exchange.
         """
         # pylint: disable=protected-access
@@ -164,7 +182,8 @@ class Queue(AbstractQueue):
 
         def on_bindok(unused_frame):
             future.set_result(True)
-        self.log.debug('Bind queue %s', self.name)
+
+        self.log.debug('Bind queue')
         self._channel.queue_bind(on_bindok, self.name,
                                  self.exchange, self.routing_key)
 
@@ -177,13 +196,14 @@ class Queue(AbstractQueue):
         """
         bounded_handler = partial(handler, self)
         self._consume_handler = handler
-        self.log.info("%s: Start consume", self.name)
+        self.log.debug("Start consuming")
         self._channel.add_on_close_callback(
             self.on_channel_closed
         )
         self._consumer_tag = self._channel.basic_consume(bounded_handler,
                                                          self.name)
-        self.log.info("Consumer tag (%s) %s", id(self), self._consumer_tag)
+        self.log.debug("Consumer tag %s on CHANNEL%i",
+                       self._consumer_tag, self._channel.channel_number)
 
     async def declare_and_consume(self, handler):
         """Declare queue and consume.
@@ -203,8 +223,8 @@ class Queue(AbstractQueue):
             app_id='example-publisher',
             content_type='application/json'
         )
-        self.log.info("Publish to %s:%s", self.exchange,
-                      routing_key or self.routing_key)
+        self.log.debug("Publish to %s:%s", self.exchange,
+                       routing_key or self.routing_key)
         channel = await self._backend.publish_channel(reuse=False)
         try:
             channel.basic_publish(
@@ -304,10 +324,10 @@ class Queue(AbstractQueue):
         """
         pass
 
-    def on_cancelok(self, *args, **kwargs):
+    def on_cancelok(self, method_frame):
         """Handle cancelok.
         """
-        self.log.info("Cancelok %s %s", args, kwargs)
+        self.log.debug("Cancel ok on CHANNEL%s", method_frame.channel_number)
 
     def __repr__(self):
         """Queue representation.

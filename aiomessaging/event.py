@@ -1,5 +1,7 @@
 """Event object.
 """
+from .logging import EventLoggerAdapter
+
 from .utils import gen_id
 
 
@@ -10,11 +12,13 @@ class Event:
     """
     def __init__(self, event_type, payload=None, event_id=None):
         self.id = event_id
+        if self.id is None:
+            self.id = gen_id()
+
         self.type = event_type
         self.payload = payload or {}
 
-        if self.id is None:
-            self.id = gen_id()
+        self.log = EventLoggerAdapter(self)
 
     def to_dict(self):
         """Serialize event to dict.

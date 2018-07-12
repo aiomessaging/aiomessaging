@@ -62,11 +62,11 @@ class GenerationPipeline(ParallelPipeline):
     """
     async def __call__(self, queue, event):
         childs = self.callable_list
-        self.log.debug("Start generation pipeline")
+        event.log.debug("Start generation pipeline")
         result = await asyncio.gather(
             *(item(event, queue) for item in childs)
         )
-        self.log.debug("Generation pipeline finished with %s", result)
+        event.log.debug("Generation pipeline finished with %s", result)
         return result
 
 

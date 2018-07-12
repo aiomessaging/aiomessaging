@@ -27,14 +27,17 @@ class EventConsumer(SingleQueueConsumer):
         self.queue_service = queue_service
 
     async def handler(self, message):
-        self.log.debug("message received: %s", message)
-        event = message
         try:
-            await self.handle_event(event)
-        except DropException:
-            pass
-        except DelayException:
-            pass
+            event = Event('example_event', payload=message)
+            event.log.info("Event in event consumer")
+            try:
+                await self.handle_event(event)
+            except DropException:
+                pass
+            except DelayException:
+                pass
+        except Exception:
+            self.log.exception("Exception in event handler")
 
     async def handle_event(self, event: Event):
         """Event handler.
@@ -46,16 +49,15 @@ class EventConsumer(SingleQueueConsumer):
 
     async def generate_messages(self, event: Event):
         """Generate messages from event.
+
+        Start generators and pass tmp queue to them. Wait them to finish.
         """
-        # start generators and pass tmp queue to them
-        # wait them to finish
-        self.log.debug("Generate messages for event %s", event)
+        event.log.info("Start generation")
         tmp_queue = await self.queue_service.generation_queue(self.event_type)
-        self.log.debug('Tmp queue: %s', tmp_queue)
         await self.generators(tmp_queue, event)
         # TODO: check generator results. Stop if failed.
         await self.start_consume(tmp_queue)
-        tmp_queue.close()
+        event.log.info("Generation finished")
 
     async def start_consume(self, queue):
         """ Start consume queue with generated messages

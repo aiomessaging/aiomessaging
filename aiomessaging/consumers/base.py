@@ -111,7 +111,7 @@ class BaseConsumer:
 
     # pylint: disable=unused-argument,too-many-arguments
     def _handler(self, queue, channel, basic_deliver, properties, body):
-        self.log.info('Start task execution (_handler): %s', body)
+        self.log.debug('Start task execution (_handler): %s', body)
         # pylint: disable=c-extension-no-member
         task = self.loop.create_task(
             self.handler(ujson.loads(body))

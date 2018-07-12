@@ -5,6 +5,7 @@ from typing import Dict, List
 
 from .utils import gen_id
 from .event import Event
+from .logging import MessageLoggerAdapter
 
 
 logger = logging.getLogger(__name__)
@@ -13,24 +14,26 @@ logger = logging.getLogger(__name__)
 class Message:
     """Message.
     """
-    id = None
+    __slots__ = ['id', 'event', 'content', 'meta', 'route', 'log']
+    id: int
     event: Event
-    content: Dict = {}
-    meta: Dict = {}
-    route: List = []
+    content: Dict
+    meta: Dict
+    route: List
+    log: MessageLoggerAdapter
 
     # pylint: disable=redefined-builtin,too-many-arguments
     def __init__(self, id=None, event=None, content=None, meta=None,
                  route=None):
         if not event:
-            raise Exception("No event!")
-        self.id = id
-        if self.id is None:
-            self.id = gen_id(event.id)
+            raise Exception("No event provided for message!")
+
+        self.id = id or gen_id(event.id)
         self.event = event
-        self.content = content
+        self.content = content or {}
         self.meta = meta
         self.route = route
+        self.log = MessageLoggerAdapter(self)
 
     @property
     def type(self):

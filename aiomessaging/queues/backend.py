@@ -108,9 +108,7 @@ class QueueBackend:
         def on_channel(channel: pika.channel.Channel):
             """On channel closed handler.
             """
-            self.log.debug('Channel opened')
             channel.add_on_close_callback(self.on_channel_closed)
-            self.log.debug('CHANNEL%i: open', channel.channel_number)
             channel.basic_qos(prefetch_count=20)
             self._channel = channel
             try:
@@ -119,7 +117,6 @@ class QueueBackend:
                 pass
             future.set_result(channel)
 
-        self.log.debug('Opening new channel...')
         self.connection.channel(on_open_callback=on_channel)
         return await asyncio.wait_for(future, timeout=DECLARE_CHANNEL_TIMEOUT)
 
@@ -146,9 +143,7 @@ class QueueBackend:
         def on_channel(channel: pika.channel.Channel):
             """On channel opened handler.
             """
-            self.log.debug('Channel opened')
             channel.add_on_close_callback(self.on_channel_closed)
-            self.log.debug('CHANNEL%i: open', channel.channel_number)
             self._channel_publish = channel
             try:
                 self._channel_publish_opening.set_result(channel)
@@ -178,8 +173,7 @@ class QueueBackend:
     def on_channel_closed(self, channel, reply_code, reply_text):
         """Handle channel closed event.
         """
-        self.log.debug('CHANNEL%i: closed', channel.channel_number)
-        self.log.info("channel closed %s: %s", reply_code, reply_text)
+        self.log.debug('CHANNEL%i closed', channel.channel_number)
 
     def on_open_error_callback(self, *args, **kwargs):
         """Opening error callback.

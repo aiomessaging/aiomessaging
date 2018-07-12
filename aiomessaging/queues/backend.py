@@ -245,7 +245,7 @@ class QueueBackend:
         """Get events queue.
         """
         name = f"events.{event_type}"
-        return await self.get_queue(name)
+        return await self.get_queue(name, auto_delete=False, durable=True)
 
     async def generation_queue(self, event_type=None, name=None) -> Queue:
         """Declare tmp generation queue.

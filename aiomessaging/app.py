@@ -183,11 +183,6 @@ class AiomessagingApp:
         logging.basicConfig(
             format=self.config.get_log_format()
         )
-        # if self.config.app.debug:
-        #     log_level = logging.DEBUG
-        # else:
-        #     log_level = logging.INFO
-        # self.log.setLevel(log_level)
 
         if self.config.is_testing:
             # skip config for tests, because it replaces caplog handlers

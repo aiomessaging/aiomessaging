@@ -85,21 +85,21 @@ class QueueBackend:
         """
         return self.connection.is_open
 
-    async def channel(self, reuse=True):
+    async def channel(self):
         """Get new channel for connection (coroutine).
         """
         future = asyncio.Future(loop=self.loop)
 
-        if reuse and not self._connecting.done():
+        if not self._connecting.done():
             self.log.debug('Await connecting...')
             await self._connecting
 
-        if reuse and self._channel_opening:
+        if self._channel_opening:
             if not self._channel_opening.done():
                 self.log.debug('Channel already opening, wait it...')
                 return await self._channel_opening
 
-        if reuse and self._channel and self._channel.is_open:
+        if self._channel and self._channel.is_open:
             future.set_result(self._channel)
             return await future
 
@@ -120,22 +120,22 @@ class QueueBackend:
         self.connection.channel(on_open_callback=on_channel)
         return await asyncio.wait_for(future, timeout=DECLARE_CHANNEL_TIMEOUT)
 
-    async def publish_channel(self, reuse=True):
+    async def publish_channel(self):
         """Get new channel for connection (coroutine).
         """
         future = asyncio.Future(loop=self.loop)
 
-        if reuse and not self._connecting.done():
+        if not self._connecting.done():
             self.log.debug('Await connecting...')
             await self._connecting
 
-        if reuse and self._channel_publish_opening:
+        if self._channel_publish_opening:
             if not self._channel_publish_opening.done():
                 self.log.debug('Publish channel already opening, wait it...')
                 return await asyncio.wait_for(future,
                                               timeout=DECLARE_CHANNEL_TIMEOUT)
 
-        if reuse and self._channel_publish and self._channel_publish.is_open:
+        if self._channel_publish and self._channel_publish.is_open:
             self.log.debug('Use existing channel, its open')
             future.set_result(self._channel_publish)
             return await future

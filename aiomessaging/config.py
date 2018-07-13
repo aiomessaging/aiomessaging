@@ -86,6 +86,71 @@ class Config(BaseConfig):
         """
         return getattr(self.app, 'testing', False)
 
+    @property
+    def logging_dict(self):
+        """Logging dict config.
+        """
+        return {
+            "version": 1,
+            "disable_existing_loggers": True,
+            "formatters": {
+                "default": {
+                    "class": "logging.Formatter",
+                    "format": self.config.get_log_format()
+                }
+            },
+            "handlers": {
+                "null": {
+                    "level": "DEBUG",
+                    "class": "logging.NullHandler",
+                },
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "formatter": "default"
+                }
+            },
+            "loggers": {
+                "aiomessaging": {
+                    "level": "DEBUG",
+                    "handlers": ["null"],
+                    "propagate": True
+                },
+                "aiomessaging.app": {
+                    "level": "INFO",
+                    "handlers": ["console"],
+                    "propagate": False
+                },
+                "aiomessaging.message": {
+                    "level": "INFO",
+                    "handlers": ["console"],
+                    "propagate": False
+                },
+                "aiomessaging.event": {
+                    "level": "INFO",
+                    "handlers": ["console"],
+                    "propagate": False
+                },
+                "aiomessaging.consumers.base": {
+                    "level": "INFO",
+                    "handlers": ["console"],
+                    "propagate": False
+                },
+                "aiomessaging.queues": {
+                    "level": "INFO",
+                    "handlers": ["console"],
+                    "propagate": False
+                },
+                "aiomessaging.queues.backend": {
+                    "level": "INFO",
+                    "propagate": False
+                }
+            },
+            "root": {
+                "level": "DEBUG",
+                "handlers": ["console"]
+            },
+        }
+
     def get_event_pipeline(self, event_type):
         """Event pipeline for event.
         """

@@ -82,6 +82,8 @@ class Config(BaseConfig):
     """
     @property
     def is_testing(self):
+        """Is app in testing.
+        """
         return getattr(self.app, 'testing', False)
 
     def get_event_pipeline(self, event_type):

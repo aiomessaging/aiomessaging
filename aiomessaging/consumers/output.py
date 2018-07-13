@@ -23,5 +23,5 @@ class OutputConsumer(BaseMessageConsumer):
             d. NeverDelivered - mark backend as failed and send message back
                to output queue (select next backend in next step)
         """
-        # FIXME: start from here
+        # TODO: this is actual end of pipeline
         message.log.info("Message in output handler [this is the end for a while]")

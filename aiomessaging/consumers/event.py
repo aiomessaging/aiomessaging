@@ -27,16 +27,15 @@ class EventConsumer(SingleQueueConsumer):
         self.queue_service = queue_service
 
     async def handler(self, message):
+        event = Event('example_event', payload=message)
+        event.log.info("Event in event consumer")
         try:
-            event = Event('example_event', payload=message)
-            event.log.info("Event in event consumer")
-            try:
-                await self.handle_event(event)
-            except DropException:
-                pass
-            except DelayException:
-                pass
-        except Exception:
+            await self.handle_event(event)
+        except DropException:
+            pass
+        except DelayException:
+            pass
+        except Exception:  # pylint: disable=broad-except
             self.log.exception("Exception in event handler")
 
     async def handle_event(self, event: Event):

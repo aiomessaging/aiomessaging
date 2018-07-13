@@ -131,10 +131,12 @@ class QueueBackend:
 
         if reuse and self._channel_publish_opening:
             if not self._channel_publish_opening.done():
-                self.log.debug('Channel already opening, wait it...')
-                return await self._channel_publish_opening
+                self.log.debug('Publish channel already opening, wait it...')
+                return await asyncio.wait_for(future,
+                                              timeout=DECLARE_CHANNEL_TIMEOUT)
 
-        if reuse and self._channel_publish and self._channel.is_open:
+        if reuse and self._channel_publish and self._channel_publish.is_open:
+            self.log.debug('Use existing channel, its open')
             future.set_result(self._channel_publish)
             return await future
 
@@ -145,6 +147,7 @@ class QueueBackend:
             """
             channel.add_on_close_callback(self.on_channel_closed)
             self._channel_publish = channel
+            self.log.debug('Channel acquired %i', channel.channel_number)
             try:
                 self._channel_publish_opening.set_result(channel)
             except asyncio.InvalidStateError:

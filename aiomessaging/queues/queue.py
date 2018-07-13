@@ -78,7 +78,7 @@ class Queue(AbstractQueue):
 
     Pass empty string to `name` if you want a random name.
 
-    Queue handles reconnects by itself obtaining new channel from backend if
+    Queue handle reconnects by itself obtaining new channel from backend if
     current one was closed. (TODO)
     """
 

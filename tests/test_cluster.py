@@ -1,3 +1,4 @@
+import asyncio
 import pytest
 
 from aiomessaging.cluster import Cluster
@@ -56,7 +57,12 @@ async def test_invalid_action(event_loop, caplog):
         "action": "invalid_action",
         "queue_name": "example"
     })
-
+    await send_test_message(queues.connection, queue_name=queue.name, body={
+        "action": "consume",
+    })
+    await send_test_message(queues.connection, queue_name=queue.name, body={
+        "queue_name": "example"
+    })
     await cluster.stop()
 
     # cluster generation queue (results of "consume" action)
@@ -68,4 +74,24 @@ async def test_invalid_action(event_loop, caplog):
     await queues.close()
 
     assert has_log_message(caplog, level='ERROR')
-    assert log_count(caplog, level='ERROR') == 1
+    assert log_count(caplog, level='ERROR') == 3
+
+
+@pytest.mark.asyncio
+async def test_start_consume(event_loop, caplog):
+    queues = QueueBackend()
+    await queues.connect()
+
+    queue = await queues.cluster_queue()
+
+    cluster = Cluster(queue=queue, loop=event_loop)
+    await cluster.start()
+
+    await cluster.start_consume('example')
+
+    await asyncio.sleep(1)
+
+    await cluster.stop()
+    await queues.close()
+
+    assert not has_log_message(caplog, level='ERROR')

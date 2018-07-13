@@ -80,6 +80,7 @@ class BaseConsumer:
         """Start consumer and monitoring tasks.
         """
         self.running = True
+        self.monitoring_task = self.loop.create_task(self._monitoring())
 
     def consume(self, queue):
         """Consume coroutine.
@@ -114,10 +115,20 @@ class BaseConsumer:
         self.log.debug('Start task execution (_handler): %s', body)
         # pylint: disable=c-extension-no-member
         task = self.loop.create_task(
-            self.handler(ujson.loads(body))
+            self._handler_task(
+                ujson.loads(body),
+                channel,
+                basic_deliver.delivery_tag
+            )
         )
         self.msg_tasks.append(task)
-        channel.basic_ack(basic_deliver.delivery_tag)
+
+    async def _handler_task(self, body, channel, delivery_tag):
+        # TODO: retry (republish), drop, explicit nack(?) handling
+        await self.handler(body)
+        # ack only in case of success of handler
+        channel.basic_ack(delivery_tag)
+        # wait for ack ok?
 
     # pylint: disable=unused-argument
     async def handler(self, message):
@@ -139,8 +150,12 @@ class BaseConsumer:
         await asyncio.sleep(0)
 
         if getattr(self, 'monitoring_task', False):
+            # self.monitoring_task.cancel()
             await asyncio.wait_for(self.monitoring_task, 2)
-            self.log.info("Monitor task cancelled")
+            if self.monitoring_task.done():
+                self.log.info("Monitor task cancelled")
+            else:
+                self.log.error("Monitoring task error")
 
         if getattr(self, 'task', False):
             self.log.info("Graceful consumer shutdown")
@@ -199,7 +214,6 @@ class SingleQueueConsumer(BaseConsumer):
         """Consume default queue.
         """
         self.consume(self.queue)
-        self.monitoring_task = self.loop.create_task(self._monitoring())
 
 
 class MessageConsumerMixIn:

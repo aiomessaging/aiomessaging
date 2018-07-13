@@ -314,10 +314,8 @@ class Queue(AbstractQueue):
                     self.on_cancelok,
                     self._consumer_tag
                 )
-            else:
-                self.log.debug("No consumer tag defined, nothing to cancel")
         except pika.exceptions.ChannelClosed:
-            self.log.debug('Trying to cancel')
+            self.log.debug('Channel already closed while closing queue')
 
     def cancel(self):
         """Stop consume messages from queue.

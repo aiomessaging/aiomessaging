@@ -118,6 +118,8 @@ async def test_consume_multiple_queues(event_loop, caplog):
     #        sleep).
     await asyncio.sleep(0.1)
 
+    await consumer.stop()
+
     assert consumer.counter == 2
 
     assert log_count(caplog, level="ERROR") == 0

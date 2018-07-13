@@ -28,7 +28,5 @@ class MessageConsumer(BaseMessageConsumer):
         2b. Send message to delivery queue of selected backend
         """
         # output = self.router.select_output(self.event_type, message)
-        queue = self.output_queue
-        self.log.debug("Send message to %s: %s", queue.name, message)
-        await queue.publish(message.to_dict())
-        queue.close()
+        await self.output_queue.publish(message.to_dict())
+        message.log.debug("MessageConsumer")

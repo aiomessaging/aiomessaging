@@ -24,4 +24,4 @@ class OutputConsumer(BaseMessageConsumer):
                to output queue (select next backend in next step)
         """
         # TODO: this is actual end of pipeline
-        message.log.info("Message in output handler [this is the end for a while]")
+        message.log.debug("Message in output handler [this is the end for a while]")

@@ -54,8 +54,7 @@ class GenerationConsumer(MessageConsumerMixIn, BaseConsumer):
         await self._stop_consumer_monitoring()
 
     async def handle_message(self, message: Message):
-        message.log.info("Send message to output")
-        self.log.debug("Generated message recieved %s", message)
+        message.log.debug("Send message to output")
         await self.send_output(message)
 
     async def send_output(self, message: Message):
@@ -111,6 +110,8 @@ class GenerationConsumer(MessageConsumerMixIn, BaseConsumer):
             for queue, last_time in self.last_recived_time.copy().items():
                 if time.time() - last_time > QUEUE_FORGET_TIMEOUT:
                     self.cancel(queue)
-                    queue.log.debug('Empty. Cancel by generation monitoring after %f',
-                                    QUEUE_FORGET_TIMEOUT)
+                    queue.log.debug(
+                        'Empty. Cancel by generation monitoring after %f',
+                        QUEUE_FORGET_TIMEOUT
+                    )
             await asyncio.sleep(1)

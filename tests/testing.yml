@@ -1,6 +1,7 @@
 # aiomessaging example configuration file
 app:
-  debug: False
+  debug: True
+  testing: True
 # queue backend configuration
 queue:
   backend: rabbitmq

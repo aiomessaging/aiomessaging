@@ -59,6 +59,8 @@ async def test_fail(event_loop, caplog):
 
     Consumer must log error.
     """
+    event_loop.set_debug(True)
+
     # pylint: disable=abstract-method
     class ExampleFailHandler(SingleQueueConsumer):
         """Consumer with failing _handler.
@@ -66,6 +68,8 @@ async def test_fail(event_loop, caplog):
         Always fails with Exception.
         """
         def _handler(self, queue, channel, basic_deliver, properties, body):
+            # This helps to pass tests
+            # self.log.error("Make it work :-)")
             raise Exception("exception from _handler")
 
     backend = QueueBackend(loop=event_loop)

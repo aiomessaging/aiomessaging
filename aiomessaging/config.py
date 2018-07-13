@@ -80,6 +80,10 @@ class Config(BaseConfig):
 
     Allow to abstract from config structure.
     """
+    @property
+    def is_testing(self):
+        return getattr(self.app, 'testing', False)
+
     def get_event_pipeline(self, event_type):
         """Event pipeline for event.
         """

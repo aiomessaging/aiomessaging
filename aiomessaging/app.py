@@ -188,6 +188,11 @@ class AiomessagingApp:
         # else:
         #     log_level = logging.INFO
         # self.log.setLevel(log_level)
+
+        if self.config.is_testing:
+            # skip config for tests, because it replaces caplog handlers
+            return
+
         logging.config.dictConfig({
             "version": 1,
             "disable_existing_loggers": True,

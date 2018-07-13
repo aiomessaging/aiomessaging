@@ -225,7 +225,7 @@ class Queue(AbstractQueue):
         )
         self.log.debug("Publish to %s:%s", self.exchange,
                        routing_key or self.routing_key)
-        channel = await self._backend.publish_channel()
+        channel = await self._backend.channel('publish')
         try:
             channel.basic_publish(
                 self.exchange,

@@ -3,6 +3,8 @@
 import logging
 import asyncio
 
+from typing import Dict
+
 import pika
 import ujson
 
@@ -30,10 +32,9 @@ class QueueBackend:
     # set to True before expected close
     _normal_close = False
     _reconnect_task = None
-    _channel = None
-    _channel_opening = None
-    _channel_publish = None
-    _channel_publish_opening = None
+
+    _channels: Dict[str, pika.channel.Channel]
+    _channels_opening: Dict[str, asyncio.Future]
 
     # pylint: disable=too-many-arguments
     def __init__(self, host='localhost', port=5672, username='guest',
@@ -48,8 +49,12 @@ class QueueBackend:
         self.log = logger
 
         self.connection = None
+
         self._connecting = False
         self._closing = False
+
+        self._channels_opening = {}
+        self._channels = {}
 
     # pylint: disable=no-self-use
     def get_url(self):
@@ -85,7 +90,7 @@ class QueueBackend:
         """
         return self.connection.is_open
 
-    async def channel(self):
+    async def channel(self, name='default'):
         """Get new channel for connection (coroutine).
         """
         future = asyncio.Future(loop=self.loop)
@@ -94,67 +99,29 @@ class QueueBackend:
             self.log.debug('Await connecting...')
             await self._connecting
 
-        if self._channel_opening:
-            if not self._channel_opening.done():
+        if name in self._channels_opening:
+            if not self._channels_opening[name].done():
                 self.log.debug('Channel already opening, wait it...')
-                return await self._channel_opening
+                return await self._channels_opening[name]
 
-        if self._channel and self._channel.is_open:
-            future.set_result(self._channel)
+        if name in self._channels and self._channels[name].is_open:
+            future.set_result(self._channels[name])
             return await future
 
-        self._channel_opening = self._create_future()
+        self._channels_opening[name] = self._create_future()
 
         def on_channel(channel: pika.channel.Channel):
             """On channel closed handler.
             """
             channel.add_on_close_callback(self.on_channel_closed)
             channel.basic_qos(prefetch_count=20)
-            self._channel = channel
+            self._channels[name] = channel
             try:
-                self._channel_opening.set_result(channel)
+                self._channels_opening[name].set_result(channel)
             except asyncio.InvalidStateError:
                 pass
             future.set_result(channel)
 
-        self.connection.channel(on_open_callback=on_channel)
-        return await asyncio.wait_for(future, timeout=DECLARE_CHANNEL_TIMEOUT)
-
-    async def publish_channel(self):
-        """Get new channel for connection (coroutine).
-        """
-        future = asyncio.Future(loop=self.loop)
-
-        if not self._connecting.done():
-            self.log.debug('Await connecting...')
-            await self._connecting
-
-        if self._channel_publish_opening:
-            if not self._channel_publish_opening.done():
-                self.log.debug('Publish channel already opening, wait it...')
-                return await asyncio.wait_for(future,
-                                              timeout=DECLARE_CHANNEL_TIMEOUT)
-
-        if self._channel_publish and self._channel_publish.is_open:
-            self.log.debug('Use existing channel, its open')
-            future.set_result(self._channel_publish)
-            return await future
-
-        self._channel_publish_opening = self._create_future()
-
-        def on_channel(channel: pika.channel.Channel):
-            """On channel opened handler.
-            """
-            channel.add_on_close_callback(self.on_channel_closed)
-            self._channel_publish = channel
-            self.log.debug('Channel acquired %i', channel.channel_number)
-            try:
-                self._channel_publish_opening.set_result(channel)
-            except asyncio.InvalidStateError:
-                pass
-            future.set_result(channel)
-
-        self.log.debug('Opening new channel...')
         self.connection.channel(on_open_callback=on_channel)
         return await asyncio.wait_for(future, timeout=DECLARE_CHANNEL_TIMEOUT)
 

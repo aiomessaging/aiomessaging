@@ -7,10 +7,10 @@ from .base import BaseMessageConsumer
 
 class MessageConsumer(BaseMessageConsumer):
 
-    """Delivery consumer.
+    """Message consumer.
 
-    Recieve message from output queue, send it to selected output (event
-    type + backend combination).
+    Consume messages from `messages.<event_type>` queue and route it to the
+    next output(s).
     """
 
     def __init__(self, event_type, router, output_queue, **kwargs):
@@ -29,4 +29,4 @@ class MessageConsumer(BaseMessageConsumer):
         """
         # output = self.router.select_output(self.event_type, message)
         await self.output_queue.publish(message.to_dict())
-        message.log.debug("MessageConsumer")
+        message.log.debug("published to output")

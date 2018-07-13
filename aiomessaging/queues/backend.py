@@ -85,7 +85,7 @@ class QueueBackend:
         """
         return self.connection.is_open
 
-    async def channel(self, reuse=False):
+    async def channel(self, reuse=True):
         """Get new channel for connection (coroutine).
         """
         future = asyncio.Future(loop=self.loop)

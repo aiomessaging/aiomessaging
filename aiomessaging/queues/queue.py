@@ -225,7 +225,7 @@ class Queue(AbstractQueue):
         )
         self.log.debug("Publish to %s:%s", self.exchange,
                        routing_key or self.routing_key)
-        channel = await self._backend.publish_channel(reuse=False)
+        channel = await self._backend.publish_channel()
         try:
             channel.basic_publish(
                 self.exchange,
@@ -238,7 +238,6 @@ class Queue(AbstractQueue):
                 'Message not delivered (%s): %s',
                 routing_key, body
             )
-        channel.close()
 
     def on_channel_closed(self, *args, **kwargs):
         """Handle channel closed event.

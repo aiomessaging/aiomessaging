@@ -11,6 +11,9 @@ class MessageConsumer(BaseMessageConsumer):
 
     Consume messages from `messages.<event_type>` queue and route it to the
     next output(s).
+
+    Output queue used to distribute message delivery between all subscribed
+    workers.
     """
 
     def __init__(self, event_type, router, output_queue, **kwargs):
@@ -20,8 +23,8 @@ class MessageConsumer(BaseMessageConsumer):
         self.output_queue = output_queue
 
     async def handle_message(self, message: Message):
+        """Message handler.
 
-        """
         TODO:
         1. Select backend
         2a. Log if message not delivered

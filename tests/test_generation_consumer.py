@@ -22,7 +22,7 @@ async def test_simple(event_loop):
     consumer.consume(queue2)
 
     event = Event('example')
-    message = Message(event=event)
+    message = Message(event_type=event.type, event_id=event.id)
     await consumer.handle_message(message)
     await consumer.stop()
     await backend.close()

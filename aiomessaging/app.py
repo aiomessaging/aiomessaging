@@ -188,7 +188,7 @@ class AiomessagingApp:
             # skip config for tests, because it replaces caplog handlers
             return
 
-        logging.config.dictConfig(self.config.logging_dict)  # pragma: no cover
+        logging.config.dictConfig(self.config.get_logging_dict())  # pragma: no cover
 
     def set_event_loop(self, loop):
         """Set event loop to run on.

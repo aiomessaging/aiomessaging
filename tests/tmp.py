@@ -22,7 +22,7 @@ class OneMessage:
         pass
 
     async def __call__(self, event: Event, tmp_queue):
-        message = Message(event=event, content={'a': 'something'})
+        message = Message(event_type=event.type, event_id=event.id, content={'a': 'something'})
         await tmp_queue.publish(
             body=message.to_dict(),
             routing_key=tmp_queue.routing_key

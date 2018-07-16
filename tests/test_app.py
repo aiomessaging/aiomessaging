@@ -1,7 +1,11 @@
 import pytest
 import asyncio
+import logging
 
 from aiomessaging.app import AiomessagingApp
+
+
+logging.getLogger('aiomessaging').setLevel(logging.DEBUG)
 
 
 def test_sync(event_loop, app):
@@ -25,9 +29,9 @@ async def test_listen_generation(event_loop, app):
 
     await app.shutdown()
 
-    # FIXME: this timeout required to prevent asyncio warnings looks like we
-    #        need to wait something specific in `app.shutdown()``
-    #        (`GenerationConsumer._monitor_generation`)
+    # TODO: this timeout required to prevent asyncio warnings looks like we
+    #       need to wait something specific in `app.shutdown()``
+    #       (`GenerationConsumer._monitor_generation`)
     await asyncio.sleep(0.5)
 
 

@@ -7,3 +7,7 @@ const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__)|logger)$
 
 [MISCELLANEOUS]
 notes=FIXME,XXX
+
+[MESSAGES CONTROL]
+disable=invalid-name,
+        too-few-public-methods

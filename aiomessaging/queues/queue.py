@@ -102,12 +102,9 @@ class Queue(AbstractQueue):
         self.auto_delete = auto_delete
         self.durable = durable
 
-        self.channel = None
-
-        assert self.need_declare_exchange() or self.need_declare_queue(), \
+        assert self.exchange or self.name is not None, \
             ("You must define name if you want to consume queue"
-             "or exchange, exchange_type and routing_key if you want to "
-             "publish (to exchange).")
+             "or exchange if you want to publish to this queue.")
 
     @property
     def name(self):
@@ -117,77 +114,22 @@ class Queue(AbstractQueue):
         """Declare required queue and exchange.
 
         Queue, exchange and binding will be declared if information provided.
-        See `need_declare_queue` and `need_declare_exchange` methods for
-        details.
         """
+        # we are relying to this in other functions
         self._channel = await self._backend.channel()
         self.log.debug("Channel acquired CHANNEL%i",
                        self._channel.channel_number)
 
-        if self.need_declare_exchange():
+        if self.exchange:
             await self.declare_exchange()
 
-        if self.need_declare_queue():
+        if self.name is not None:
             await self.declare_queue()
 
-        if self.need_declare_queue() and self.need_declare_exchange():
+        if self.exchange:
             await self.bind_queue()
 
         return self
-
-    async def declare_exchange(self) -> asyncio.Future:
-        """Declare exchange for queue.
-        """
-        # pylint: disable=protected-access
-        future = self._backend._create_future()
-
-        def on_declare_exchange(frame):
-            future.set_result(frame)
-            self.log.debug('Exchange `%s` declared ok', self.exchange)
-
-        self._channel.exchange_declare(
-            on_declare_exchange,
-            self.exchange,
-            self.exchange_type
-        )
-
-        return future
-
-    def declare_queue(self) -> asyncio.Future:
-        """Declare amqp queue.
-        """
-        # pylint: disable=protected-access
-        future = self._backend._create_future()
-
-        def on_queue_declare(method_frame):
-            # TODO: there is a race condition (check)
-            self._name = method_frame.method.queue
-            future.set_result(method_frame)
-            self.log.debug('Declared ok')
-
-        self._channel.queue_declare(
-            on_queue_declare, self.name, auto_delete=self.auto_delete,
-            durable=self.durable
-        )
-
-        self.log.debug('Declaring queue itself')
-
-        return future
-
-    def bind_queue(self):
-        """Bind queue to exchange.
-        """
-        # pylint: disable=protected-access
-        future = self._backend._create_future()
-
-        def on_bindok(unused_frame):
-            future.set_result(True)
-
-        self.log.debug('Bind queue')
-        self._channel.queue_bind(on_bindok, self.name,
-                                 self.exchange, self.routing_key)
-
-        return future
 
     def consume(self, handler):
         """Start consume queue.
@@ -239,6 +181,76 @@ class Queue(AbstractQueue):
                 routing_key, body
             )
 
+    async def delete(self):
+        """Delete queue explicitly.
+        """
+        # pylint: disable=protected-access
+        future = self._backend._create_future()
+
+        def on_delete():
+            future.set_result(True)
+            self.log.debug('deleted')
+
+        self._channel.queue_delete(callback=on_delete, queue=self.name)
+        self.log.debug('delete')
+
+        return future
+
+    async def declare_exchange(self) -> asyncio.Future:
+        """Declare exchange for queue.
+        """
+        # pylint: disable=protected-access
+        future = self._backend._create_future()
+
+        def on_declare_exchange(frame):
+            future.set_result(frame)
+            self.log.debug('Exchange `%s` declared ok', self.exchange)
+
+        self._channel.exchange_declare(
+            on_declare_exchange,
+            self.exchange,
+            self.exchange_type
+        )
+
+        return future
+
+    def declare_queue(self) -> asyncio.Future:
+        """Declare amqp queue.
+        """
+        # pylint: disable=protected-access
+        future = self._backend._create_future()
+
+        def on_queue_declare(method_frame):
+            # TODO: there is a race condition (check)
+            self._name = method_frame.method.queue
+            future.set_result(method_frame)
+            self.log.debug('Declared ok')
+
+        self._channel.queue_declare(
+            on_queue_declare, self.name, auto_delete=self.auto_delete,
+            durable=self.durable
+        )
+
+        self.log.debug('Declaring queue itself')
+
+        return future
+
+    def bind_queue(self):
+        """Bind queue to exchange.
+        """
+        # pylint: disable=protected-access
+        future = self._backend._create_future()
+
+        def on_bindok(unused_frame):
+            future.set_result(True)
+
+        self.log.debug('Bind queue exchange=%s, routing_key=%s',
+                       self.exchange, self.routing_key)
+        self._channel.queue_bind(on_bindok, self.name,
+                                 self.exchange, self.routing_key)
+
+        return future
+
     def on_channel_closed(self, *args, **kwargs):
         """Handle channel closed event.
 
@@ -263,6 +275,7 @@ class Queue(AbstractQueue):
     def reconnect(self):
         """
         TODO: handle disconnects?
+        TODO: refactoring
         """
         self.log.info("Reconnecting %s", self.name)
         if self._backend.is_open:
@@ -282,18 +295,6 @@ class Queue(AbstractQueue):
             self.log.warning('Connection still lost. Retry after 5s.')
             self._backend.loop.call_later(5, self.reconnect)
 
-    def need_declare_exchange(self):
-        """Check if we need to declare exchange.
-
-        Returns True if all of the exchange, exchange_type and routing_key
-        defined so we can publish to our abstract queue.
-        """
-        return all([
-            self.exchange,
-            # self.exchange_type,
-            # self.routing_key
-        ])
-
     def need_declare_queue(self):
         """Check if we need to declare queue.
 
@@ -307,19 +308,23 @@ class Queue(AbstractQueue):
         """
         self._normal_close = True
 
-        try:
-            if self._consumer_tag:
-                self._channel.basic_cancel(
-                    self.on_cancelok,
-                    self._consumer_tag
-                )
-        except pika.exceptions.ChannelClosed:
-            self.log.debug('Channel already closed while closing queue')
+        self.cancel()
 
     def cancel(self):
         """Stop consume messages from queue.
         """
-        pass
+        def on_cancelok(method_frame):
+            """Handle cancelok.
+            """
+            self.log.debug("Cancel ok on CHANNEL%s", method_frame.channel_number)
+        try:
+            if self._consumer_tag:
+                self._channel.basic_cancel(
+                    on_cancelok,
+                    self._consumer_tag
+                )
+        except pika.exceptions.ChannelClosed:
+            self.log.warning('Channel already closed while closing queue')
 
     def on_cancelok(self, method_frame):
         """Handle cancelok.

@@ -1,9 +1,11 @@
-"""FIXME: where it belong to?
+"""
+TODO: need better place for this stuff
 """
 import logging
 
 from aiomessaging.event import Event
 from aiomessaging.message import Message
+from aiomessaging.outputs import AbstractOutputBackend
 
 
 log = logging.getLogger('aiomessaging')
@@ -32,9 +34,14 @@ class OneMessage:
         #     await tmp_queue.put(Message(event=event, content={'a': i}))
 
 
-class DeliveryBackend:
-    def __init__(self, *args, **kwargs):
-        pass
+class DeliveryBackend(AbstractOutputBackend):
+    name = 'sns'
 
     def __call__(self, message):
+        pass
+
+    def check(self, message):
+        pass
+
+    def send(self, message):
         pass

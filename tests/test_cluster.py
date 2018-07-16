@@ -23,6 +23,7 @@ async def test_handle_action(event_loop, caplog):
         "action": "consume",
         "queue_name": "example"
     })
+    await asyncio.sleep(0.1)
 
     await cluster.stop()
 
@@ -63,6 +64,9 @@ async def test_invalid_action(event_loop, caplog):
     await send_test_message(queues.connection, queue_name=queue.name, body={
         "queue_name": "example"
     })
+
+    await asyncio.sleep(0.1)
+
     await cluster.stop()
 
     # cluster generation queue (results of "consume" action)

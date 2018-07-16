@@ -4,6 +4,8 @@ import uuid
 import logging
 from importlib import import_module
 
+from typing import Dict, Iterable
+
 
 logger = logging.getLogger(__name__)
 
@@ -67,3 +69,70 @@ def class_from_string(class_string, base=None):
         base,
         ', '.join(tried_paths)
     ))
+
+
+class Serializable:
+
+    """Serializable mixin.
+    """
+
+    name: str
+    args: Iterable
+    kwargs: Dict
+
+    def serialize(self):
+        """Get serialized representation of effect.
+        """
+        return (
+            self.serialize_type(),
+            self.serialize_args(),
+            self.serialize_kwargs()
+        )
+
+    def serialize_type(self):
+        """Serialize type to string.
+        """
+        return '.'.join([
+            self.__class__.__module__,
+            self.__class__.__name__
+        ])
+
+    def serialize_args(self):
+        """Serialize effect arguments.
+        """
+        return self.args
+
+    def serialize_kwargs(self):
+        """Serialize effect keyword arguments.
+        """
+        return self.kwargs
+
+    @classmethod
+    def load(cls, args, kwargs):
+        """Load this effect using provided args and kwargs.
+        """
+        return cls(*cls.load_args(args), **cls.load_kwargs(kwargs))
+
+    @classmethod
+    def load_args(cls, args):
+        """Deserialize arguments.
+        """
+        return args
+
+    @classmethod
+    def load_kwargs(cls, kwargs):
+        """Deserialize keyword arguments.
+        """
+        return kwargs
+
+
+class NamedSerializable(Serializable):
+    """Named serializable.
+
+    Use `name` value when serializing instance type information instead of full
+    class path.
+    """
+    name: str
+
+    def serialize_type(self):
+        return self.name

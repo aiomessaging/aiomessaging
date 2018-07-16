@@ -10,14 +10,14 @@ from ..queues import AbstractQueue
 from .base import MessageConsumerMixIn, BaseConsumer
 
 
-QUEUE_FORGET_TIMEOUT = 1
+QUEUE_CLEANUP_TIMEOUT = 1
 
 
 class GenerationConsumer(MessageConsumerMixIn, BaseConsumer):
 
     """Generation consumer.
 
-    Recive message from tmp generation queue and place them to the provided
+    Receive message from tmp generation queue and place them to the provided
     messages queue.
     """
 
@@ -29,11 +29,15 @@ class GenerationConsumer(MessageConsumerMixIn, BaseConsumer):
 
     _consumer_monitoring_task: Optional[asyncio.Task]
 
-    def __init__(self, messages_queue: AbstractQueue, **kwargs) -> None:
+    def __init__(self,
+                 messages_queue: AbstractQueue,
+                 cleanup_timeout=QUEUE_CLEANUP_TIMEOUT,
+                 **kwargs) -> None:
         super().__init__(**kwargs)
         self.messages_queue = messages_queue
         self.last_recived_time = {}
         self.last_time = time.time()
+        self.cleanup_timeout = cleanup_timeout
 
         self._consumer_monitoring_task = None
 
@@ -100,18 +104,17 @@ class GenerationConsumer(MessageConsumerMixIn, BaseConsumer):
         """
         if self._consumer_monitoring_task:
             await self._consumer_monitoring_task
-        else:
-            self.log.info('No logs at all')
 
     async def _consumer_monitoring(self):
         """Consumer monitoring coroutine.
         """
         while self.running:
             for queue, last_time in self.last_recived_time.copy().items():
-                if time.time() - last_time > QUEUE_FORGET_TIMEOUT:
+                if time.time() - last_time > self.cleanup_timeout:
                     self.cancel(queue)
+                    await queue.delete()
                     queue.log.debug(
                         'Empty. Cancel by generation monitoring after %f',
-                        QUEUE_FORGET_TIMEOUT
+                        self.cleanup_timeout
                     )
             await asyncio.sleep(1)

@@ -10,7 +10,10 @@ import ujson
 
 from ..queues import AbstractQueue
 from ..message import Message
-from ..logging import LoggerAdapter
+from ..logging import ConsumerLoggerAdapter
+
+
+MONITORING_INTERVAL = 0.1
 
 
 class AbstractConsumer(ABC):
@@ -26,28 +29,28 @@ class AbstractConsumer(ABC):
 
         Used to start service tasks like monitoring etc.
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def stop(self):
         """Stop consumer.
 
         Stop consume, wait already running handler tasks to complete and
-        stop/cancell running service tasks.
+        stop/cancel running service tasks.
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def consume(self, queue: AbstractQueue):
         """Start consume provided queue.
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def cancel(self, queue: AbstractQueue):
         """Stop consume provided queue.
         """
-        pass
+        pass  # pragma: no cover
 
 
 class BaseConsumer:
@@ -55,12 +58,11 @@ class BaseConsumer:
 
     Produces coroutines:
 
-    - `self.handler` - for each reveived message
-    - `self._monitoring` - monitor runned handlers and remove them if done
+    - `self.handler` - for each received message
+    - `self._monitoring` - monitor running handlers and remove them if they've finished
     """
     running = False  # determine when we shutdown gracefully
     loop: asyncio.AbstractEventLoop
-    task: asyncio.Task
     monitoring_task: asyncio.Task
     consuming_queues: List[AbstractQueue]
 
@@ -71,7 +73,7 @@ class BaseConsumer:
         self.consuming_queues = []
         self.msg_tasks = []
 
-        self.log = LoggerAdapter(
+        self.log = ConsumerLoggerAdapter(
             logging.getLogger(__name__),
             {'name': self.__class__.__name__}
         )
@@ -93,7 +95,7 @@ class BaseConsumer:
     def cancel(self, queue):
         """Cancel consume queue.
         """
-        if queue not in self.consuming_queues:
+        if queue not in self.consuming_queues:  # pragma: no cover
             # May be an error?
             self.log.warning("Cancel consume queue which not in consuming "
                              "queue list %s", queue.name)
@@ -102,13 +104,13 @@ class BaseConsumer:
 
     async def _monitoring(self):
         while self.running:
-            await asyncio.sleep(0.1)
+            # TODO: GenerationConsumer._monitor_generation() pending task was
+            #       destroyed warning printed to logs with shorter sleep.
+            await asyncio.sleep(MONITORING_INTERVAL)
             for task in self.msg_tasks:
                 if task.done():
                     self.msg_tasks.remove(task)
                     del task
-            # TODO: GenerationConsumer._monitor_generation() pending task was
-            #       destroyed warning printed to logs with shorter sleep.
 
     # pylint: disable=unused-argument,too-many-arguments
     def _handler(self, queue, channel, basic_deliver, properties, body):
@@ -126,9 +128,9 @@ class BaseConsumer:
     async def _handler_task(self, body, channel, delivery_tag):
         # TODO: retry (republish), drop, explicit nack(?) handling
         await self.handler(body)
-        # ack only in case of success of handler
+        # TODO: ack only in case of success of handler
         channel.basic_ack(delivery_tag)
-        # wait for ack ok?
+        # TODO: wait for ack ok
 
     # pylint: disable=unused-argument
     async def handler(self, message):
@@ -136,7 +138,7 @@ class BaseConsumer:
 
         Must be implemented in derived class.
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     # pylint: disable=too-many-branches
     async def stop(self):
@@ -147,55 +149,15 @@ class BaseConsumer:
         self.running = False
         self.log.info('Stop consumer')
 
+        for queue in self.consuming_queues:
+            self.cancel(queue)
+
         await asyncio.sleep(0)
 
         if getattr(self, 'monitoring_task', False):
-            # self.monitoring_task.cancel()
             await asyncio.wait_for(self.monitoring_task, 2)
-            if self.monitoring_task.done():
-                self.log.info("Monitor task cancelled")
-            else:
-                self.log.error("Monitoring task error")
 
-        if getattr(self, 'task', False):
-            self.log.info("Graceful consumer shutdown")
-            # if not self.task.done() and not self.task.cancelled():
-            try:
-                self.task.cancel()
-                await asyncio.wait_for(self.task, 2)
-            except asyncio.CancelledError:
-                pass
-            try:
-                exc = self.task.exception()
-                if exc:
-                    raise exc
-            except asyncio.CancelledError:
-                self.log.debug('No errors, cancelled')
-            except asyncio.InvalidStateError:
-                self.log.debug('No errors in task')
-            except Exception:  # pylint: disable=broad-except
-                self.log.exception('Main task exception')
-            self.log.info("Main task cancelled")
-
-        waiting = self.msg_tasks
-
-        for waiter in waiting:
-            self.log.debug('Wait for %s', waiter)
-            try:
-                exc = waiter.exception()
-                if exc:
-                    try:
-                        raise exc
-                    except Exception:  # pylint: disable=broad-except
-                        self.log.exception("Exception from consumer waitings")
-                if waiter.cancelled() or waiter.done():
-                    self.log.info('alredy done or cancelled')
-                else:
-                    await asyncio.wait_for(waiter, timeout=1)
-            except asyncio.CancelledError:
-                self.log.debug('Already cancelled')
-
-        self.log.info('Wait for complete')
+        self.log.debug('Stopped.')
 
 
 # pylint: disable=abstract-method

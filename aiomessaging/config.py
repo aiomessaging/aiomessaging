@@ -25,6 +25,10 @@ class ConfigLoader(yaml.Loader):
             '!class',
             ['events', None, 'generators', None]
         )
+        self.add_path_resolver(
+            '!class',
+            ['delivery', None, 'outputs', None]
+        )
 
     @staticmethod
     def create_class(loader, node):
@@ -39,7 +43,7 @@ class ConfigLoader(yaml.Loader):
         try:
             # pylint: disable=invalid-name
             ObjClass = class_from_string(class_name)
-        except Exception:
+        except Exception:  # pragma: no cover
             raise yaml.MarkedYAMLError(f"`{class_name}` not found",
                                        node.start_mark)
         obj = ObjClass(**kwargs)
@@ -108,7 +112,7 @@ class Config(BaseConfig):
                 "aiomessaging": {
                     "level": "DEBUG",
                     "handlers": ["console"],
-                    "propagate": True
+                    "propagate": False
                 },
             },
             "root": {
@@ -153,7 +157,7 @@ class Config(BaseConfig):
         Instantiate queue backend based on configuration.
         """
         conf = self.queue
-        if not conf:
+        if not conf:  # pragma: no cover
             raise Exception("No queue configuration")
         backend_name = conf.pop('backend')
         assert backend_name == 'rabbitmq', "No other choice for a while"

@@ -44,7 +44,7 @@ async def test_simple(event_loop, caplog):
     await consumer.start()
 
     await send_test_message(connection, "example_queue")
-
+    await asyncio.sleep(0.1)
     await consumer.stop()
     assert consumer.counter == 1
 
@@ -81,6 +81,8 @@ async def test_fail(event_loop, caplog):
 
     await send_test_message(None)
 
+    await asyncio.sleep(0.1)
+
     await consumer.stop()
 
     assert log_count(caplog, level="ERROR") == 1
@@ -113,9 +115,9 @@ async def test_consume_multiple_queues(event_loop, caplog):
     await send_test_message(backend.connection, "test_mult_1")
     await send_test_message(backend.connection, "test_mult_2")
 
-    # FIXME: wait for somthing specific. Pending task destroyed warns only in
-    #        case of two messages (have time to switch to consumer once without
-    #        sleep).
+    # TODO: wait for somthing specific. Pending task destroyed warns only in
+    #       case of two messages (have time to switch to consumer once without
+    #       sleep).
     await asyncio.sleep(0.1)
 
     await consumer.stop()

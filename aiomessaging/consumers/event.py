@@ -1,7 +1,7 @@
 """Event consumer.
 """
 from ..event import Event
-from ..exceptions import DropException, DelayException
+# from ..exceptions import DropException, DelayException
 
 from .base import SingleQueueConsumer
 
@@ -10,7 +10,7 @@ class EventConsumer(SingleQueueConsumer):
 
     """Event consumer.
 
-    Recieve messages from inbound queue, pass it though event pipeline,
+    Receive messages from inbound queue, pass it though event pipeline,
     generate messages using generation pipeline.
     """
 
@@ -31,10 +31,10 @@ class EventConsumer(SingleQueueConsumer):
         event.log.info("Event in event consumer")
         try:
             await self.handle_event(event)
-        except DropException:
-            pass
-        except DelayException:
-            pass
+        # except DropException:
+        #     pass
+        # except DelayException:
+        #     pass
         except Exception:  # pylint: disable=broad-except
             self.log.exception("Exception in event handler")
 

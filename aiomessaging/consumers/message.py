@@ -1,6 +1,7 @@
 """Message consumer.
 """
 from ..message import Message
+from ..router import Router
 
 from .base import BaseMessageConsumer
 
@@ -16,7 +17,10 @@ class MessageConsumer(BaseMessageConsumer):
     workers.
     """
 
-    def __init__(self, event_type, router, output_queue, **kwargs):
+    router: Router
+
+    def __init__(self, event_type, router: Router, output_queue,
+                 **kwargs) -> None:
         super().__init__(**kwargs)
         self.event_type = event_type
         self.router = router
@@ -25,11 +29,15 @@ class MessageConsumer(BaseMessageConsumer):
     async def handle_message(self, message: Message):
         """Message handler.
 
-        TODO:
-        1. Select backend
-        2a. Log if message not delivered
-        2b. Send message to delivery queue of selected backend
+        Select next output for message and send it to related queue.
         """
-        # output = self.router.select_output(self.event_type, message)
-        await self.output_queue.publish(message.to_dict())
-        message.log.debug("published to output")
+        try:
+            output = self.router.next_output(message)
+            await self.output_queue.publish(
+                message.to_dict(), routing_key=output.name
+            )
+            message.log.debug("published to output %s, routing_key=%s",
+                              self.output_queue.name, output.name)
+        # pylint: disable=broad-except
+        except Exception:  # pragma: no cover
+            message.log.exception("Unhandled exception in MessageConsumer")

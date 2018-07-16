@@ -1,6 +1,7 @@
 """Output consumer.
 """
 from ..message import Message
+from ..router import Router
 
 from .base import BaseMessageConsumer
 
@@ -8,9 +9,13 @@ from .base import BaseMessageConsumer
 class OutputConsumer(BaseMessageConsumer):
     """Output consumer.
     """
-    def __init__(self, event_type, **kwargs):
+    event_type: str
+    router: Router
+
+    def __init__(self, event_type: str, router: Router, **kwargs) -> None:
         super().__init__(**kwargs)
         self.event_type = event_type
+        self.router = router
 
     async def handle_message(self, message: Message):
         """

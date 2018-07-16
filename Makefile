@@ -5,7 +5,7 @@ else
 endif
 
 export PYTHONPATH=.
-PYTEST_COV_PARAMS=--cov-report=term-missing --cov aiomessaging
+PYTEST_COV_PARAMS=--cov-report=term-missing --cov aiomessaging --cov-report xml:cov.xml
 
 clean: pyclean
 	rabbitmqctl stop_app

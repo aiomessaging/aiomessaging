@@ -2,16 +2,19 @@
 .DS_Store
 __pycache__
 .cache
-.coverage*
-*.egg-info/
-docs/_build
 .vscode
+
+coverage.xml
+cov.xml
+.coverage*
 .pytest_cache
 .mypy_cache
 .testmon*
 
+*.egg-info/
 build
 dist
+docs/_build
 
 Pipfile*
 

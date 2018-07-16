@@ -247,7 +247,7 @@ class QueueBackend:
             routing_key=''
         )
 
-    async def output_queue(self, event_type) -> Queue:
+    async def output_queue(self, event_type, output_name=None) -> Queue:
         """Get output queue.
         """
         name = f"output.{event_type}"
@@ -256,9 +256,9 @@ class QueueBackend:
             auto_delete=False,
             durable=True,
 
-            exchange=f'',
+            exchange=name,
             exchange_type=self.TYPE_DIRECT,
-            routing_key=name
+            routing_key=output_name
         )
 
     def _create_future(self):

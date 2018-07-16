@@ -27,6 +27,10 @@ test-x:
 test-watch:
 	ptw -- --testmon
 
+lint:
+	pylint aiomessaging
+	mypy aiomessaging --ignore-missing-imports
+
 run:
 	python -m aiomessaging
 

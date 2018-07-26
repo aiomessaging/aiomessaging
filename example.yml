@@ -10,7 +10,7 @@ kvstore:
   backend: dummy
 events:
   example_event:
-    event_pipeline:  # sequentual
+    event_pipeline:
       - tests.tmp.ExampleFilter
       - tests.tmp.ExampleFilter:
         example_kwarg: 1
@@ -18,23 +18,5 @@ events:
       - tests.tmp.OneMessage
     message_pipeline:
       - tests.tmp.ExampleFilter
-    # generators: # parallel
-    #   - OneMessage
-    #   - OneMessage
-    # message_pipeline: # sequental
-    #   - add_delivery_info
-    output: tests.test_router.simple_pipeline
-
-    # #
-    # # Djobit way
-    # #
-    # filters:
-    #   - myapp aiomessaging.FloodFilter
-    # generators:
-    #   - myapp aiomessaging.ProjectSubscribers
-    #   - myapp aiomessaging.UserFollowers
-    # pipeline:
-    #   - myapp aiomessaging.add_data
-    #     - PushStream
-    #     - ChromePush
-    #     - pmf_digest.Digest
+    output:
+      - tests.tmp.DeliveryBackend

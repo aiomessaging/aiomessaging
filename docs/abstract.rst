@@ -41,6 +41,6 @@ consists of the following parts:
 * event filters — receives events on input and make decision to drop it or delay (for example to mutual exclusion of opposing events)
 * message generators - receives events on input and generate a batch of messages based on business rules
 * message filters - same as event filters but receives messages on its input
-* message router - choosing next backend to send message through based on user preferences (provided by generator) and previous delivery backend statuses.
-* delivery backend - delivery message to output (email, push etc.) and check status
+* message router - choosing next backend to send message through based on user preferences (provided by generator) and previous output backend statuses.
+* output backend - delivery message to output (email, push etc.) and check status
 

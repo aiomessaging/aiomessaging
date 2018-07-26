@@ -18,22 +18,12 @@ events:
       - tests.tmp.OneMessage
     message_pipeline:
       - tests.tmp.ExampleFilter
-    delivery:
-      - tests.tmp.DeliveryBackend
     # generators: # parallel
     #   - OneMessage
     #   - OneMessage
     # message_pipeline: # sequental
     #   - add_delivery_info
-    # delivery: # parallel by design
-    #   - StopIfFailed:
-    #     - aiomessaging.pipeline.Pipeline
-    #     - aiomessaging.pipeline.Pipeline
-    #   - StopIfDelivered:
-    #     - aiomessaging.pipeline.Pipeline
-    #     - aiomessaging.pipeline.Pipeline
-    #   - ContinueIfFailed:
-    #     - aiomessaging.pipeline.Pipeline
+    output: tests.test_router.simple_pipeline
 
     # #
     # # Djobit way

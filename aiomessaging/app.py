@@ -103,7 +103,7 @@ class AiomessagingApp:
     async def listen_generation(self):
         """Listen generation queue of cluster for queue names to consume.
 
-        FIXME: very bad unmeaning name
+        TODO: rename
 
         Creates consumer for generated messages when cluster event recieved.
         """
@@ -151,13 +151,13 @@ class AiomessagingApp:
     async def create_message_consumers(self):
         """Create message consumers.
         """
-        router = Router()
 
         for event_type in self.event_types():
             self.log.debug("Create event consumer for type %s", event_type)
+
             self.message_consumers[event_type] = MessageConsumer(
                 event_type,
-                router=router,
+                router=self.get_router(event_type),
                 output_queue=await self.queue.output_queue(event_type),
                 queue=await self.queue.messages_queue(event_type),
                 loop=self.loop
@@ -168,13 +168,21 @@ class AiomessagingApp:
         """Create output consumers.
         """
         for event_type in self.event_types():
-            queue = await self.queue.output_queue(event_type)
+            # TODO: only one backend hardcoded, need to support multiple
+            queue = await self.queue.output_queue(event_type, 'sns')
             self.output_consumers[event_type] = OutputConsumer(
+                router=self.get_router(event_type),
                 event_type=event_type,
                 queue=queue,
                 loop=self.loop
             )
             await self.output_consumers[event_type].start()
+
+    def get_router(self, event_type) -> Router:
+        """Get router instance for event type.
+        """
+        router_config = self.config.events.get(event_type)['output']
+        return Router(router_config)
 
     def configure_logging(self):
         """Configure logging.

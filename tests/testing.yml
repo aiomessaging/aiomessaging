@@ -19,5 +19,5 @@ events:
       - tests.tmp.OneMessage
     message_pipeline:
       - tests.tmp.ExampleFilter
-    delivery:
+    output:
       - tests.tmp.DeliveryBackend

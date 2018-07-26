@@ -1,10 +1,7 @@
 """Pipelines.
 """
-import logging
 import asyncio
 from typing import List
-
-from .logging import LoggerAdapter
 
 
 class Pipeline:
@@ -12,8 +9,6 @@ class Pipeline:
     """
     def __init__(self, config: List) -> None:
         self.callable_list = config
-        self._log = logging.getLogger(__name__)
-        self.log = LoggerAdapter(self._log, {})
 
     async def process(self, value):
         """Process regarding to pipeline configuration.
@@ -28,11 +23,10 @@ class Pipeline:
         return await self.process(value)
 
 
-# pylint: disable=too-few-public-methods
 class ParallelPipeline(Pipeline):
     """Parallel pipeline.
 
-    Executes steps in parallel (asynio).
+    Executes steps in parallel (asyncio).
     """
     async def process(self, value):
         """Process value in parallel.
@@ -68,15 +62,3 @@ class GenerationPipeline(ParallelPipeline):
         )
         event.log.debug("Generation pipeline finished with %s", result)
         return result
-
-
-class MessagePipeline(Pipeline):
-    """Message pipeline.
-    """
-    pass
-
-
-class DeliveryPipeline(ParallelPipeline):
-    """Delivery pipeline.
-    """
-    pass

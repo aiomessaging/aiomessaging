@@ -187,7 +187,8 @@ class Queue(AbstractQueue):
         # pylint: disable=protected-access
         future = self._backend._create_future()
 
-        def on_delete():
+        # pylint: disable=unused-argument
+        def on_delete(method_frame):
             future.set_result(True)
             self.log.debug('deleted')
 

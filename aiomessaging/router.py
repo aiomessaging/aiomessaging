@@ -9,9 +9,6 @@ class Router:
     """Message router.
 
     Routes messages through output backends.
-
-    Backend is chosen based on message route calculated at message pipeline
-    stage and configuration.
     """
 
     def __init__(self, output_pipeline):

@@ -56,7 +56,7 @@ class Message:
         """
         return self.event_type
 
-    def effect_status(self, effect):
+    def get_route_status(self, effect):
         """Get actual status of effect.
 
         Return ST_NEW, ST_PENDING, ST_APPLIED, ST_FAILED.
@@ -66,14 +66,17 @@ class Message:
                 return route.status
         return None
 
-    def set_effect_status(self, effect, status):
+    def set_route_status(self, effect, status):
         """Set effect status.
         """
         for route in self.route:
             if route.effect == effect:
                 route.status = status
+                break
+        else:
+            self.route.append(Route(effect, status))
 
-    def effect_state(self, effect):
+    def get_route_state(self, effect):
         """Get actual status of effect.
 
         Return ST_NEW, ST_PENDING, ST_APPLIED, ST_FAILED.

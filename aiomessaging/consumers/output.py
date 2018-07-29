@@ -28,6 +28,8 @@ class OutputConsumer(BaseMessageConsumer):
             d. NeverDelivered - mark backend as failed and send message back
                to output queue (select next backend in next step)
         """
-        # TODO: this is actual end of pipeline
+        self.router.apply_next_effect(message)
+        # TODO: this is actual end of pipeline. we need to reschedule message
+        #       if next route exists.
         message.log.debug("Message in output handler "
                           "[this is the end for a while]")

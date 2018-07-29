@@ -2,18 +2,24 @@
 Output backend abstraction and general implementation.
 """
 from abc import ABC, abstractmethod
+from typing import List, Dict
 
 from .message import Message
 from .utils import Serializable
 
 
 class AbstractOutputBackend(ABC, Serializable):
+
     """Abstract output backend.
 
     Defines public api for backend and allows to dump and restore of backend
     instance in simple case.
     """
+
     name: str
+
+    args: List
+    kwargs: Dict
 
     def __init__(self, *args, **kwargs):
         self.args = args

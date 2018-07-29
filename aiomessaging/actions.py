@@ -24,7 +24,7 @@ class Action(abc.ABC):
         """
         pass  # pragma: no cover
 
-    def execute(self):
+    def execute(self, message):
         """Execute action.
         """
         pass  # pragma: no cover
@@ -40,6 +40,9 @@ class SendOutputAction(Action):
 
     def get_output(self):
         return self.output
+
+    def execute(self, message):
+        self.output.send(message)
 
 
 # class CheckOutputAction(Action):

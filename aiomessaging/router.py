@@ -14,36 +14,30 @@ class Router:
     def __init__(self, output_pipeline):
         self.output_pipeline = output_pipeline
 
-    def next_output(self, message: Message):
-        """Select output for message.
+    def next_effect(self, message: Message):
+        """Select next effect for message.
         """
         pipeline = self.get_pipeline(message)
         send_value = None
         try:
             while True:
                 effect = pipeline.send(send_value)
-                status = message.effect_status(effect)
+                status = message.get_route_status(effect)
 
                 if not status == EffectStatus.PENDING and status:
                     continue
 
-                state = message.effect_state(effect)
-
-                while True:
-                    action = effect.next_action(state)
-
-                    if action is None:
-                        message.set_effect_status(
-                            effect, EffectStatus.FINISHED
-                        )
-
-                    output = action.get_output()
-                    if output:
-                        return output
-                    action.execute()
+                return effect
         except StopIteration:
             # No more routes available (all finished or failed)
             return None
+
+    def apply_next_effect(self, message):
+        """Apply next effect for message.
+        """
+        effect = self.next_effect(message)
+        effect.apply(message)
+        message.set_route_status(effect, EffectStatus.FINISHED)
 
     def get_pipeline(self, message: Message):
         """Get delivery pipeline.

@@ -85,10 +85,11 @@ class Effect(NamedSerializable, abc.ABC):
     performing heavy operations. Any effect can be serialized, transferred to
     the place of execution.
 
-    The method `next_action` must be implemented on all derived classes and
+    The method `next_effect` must be implemented on all derived classes and
     must return an `Action` instance or `None` if no next action available for
     this effect and it can be marked as applied by `MessageConsumer`.
     """
+
     name: str
 
     def __init__(self, *args, **kwargs):
@@ -108,23 +109,30 @@ class Effect(NamedSerializable, abc.ABC):
         """
         pass  # pragma: no cover
 
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            raise TypeError("Effect and %s can't be compared" % type(other))
+        return self.serialize() == other.serialize()
+
 
 @register_effect
 class SendEffect(Effect):
+
     """Effect: send message through outputs.
 
     Accepts outputs as the args.
     """
+
     name = 'send'
 
-    def next_action(self, state):
+    def next_action(self, state=None):
         if state is None:
             # create default state with all backends pending
             state = [OutputStatus.PENDING for b in self.args]
 
         assert len(state) == len(self.args), "State and args length must match"
 
-        # check if no pending in state
+        # check if no pending in state and reset if it was
         pendings = [s for s in state if s == OutputStatus.PENDING]
         if not pendings:
             state = reset_check_to_pending(state)
@@ -135,6 +143,23 @@ class SendEffect(Effect):
             if status == OutputStatus.PENDING:
                 break
         return SendOutputAction(output)
+
+    def apply(self, message):
+        """Send message through next pending output.
+
+        Modifies message route. Return state.
+        """
+        state = message.get_route_state(self)
+        action = self.next_action(state)
+
+        result = action.execute(message)
+
+        if result:
+            # TODO: mark action as successful
+            pass
+        else:
+            # TODO: mark action as failed
+            pass
 
     def serialize_args(self):
         return [b.serialize() for b in self.args]
@@ -149,7 +174,7 @@ class SendEffect(Effect):
 
 #     name = 'call'
 
-#     def next_action(self, state):
+#     def next_effect(self, state):
 #         """Execute callable in message consumer.
 #         """
 #         return CallAction(self.args[0], *self.args[1:], **self.kwargs)

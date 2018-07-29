@@ -4,6 +4,7 @@ from ..message import Message
 from ..router import Router
 
 from .base import BaseMessageConsumer
+from ..actions import SendOutputAction
 
 
 class MessageConsumer(BaseMessageConsumer):
@@ -32,12 +33,30 @@ class MessageConsumer(BaseMessageConsumer):
         Select next output for message and send it to related queue.
         """
         try:
-            output = self.router.next_output(message)
-            await self.output_queue.publish(
-                message.to_dict(), routing_key=output.name
-            )
-            message.log.debug("published to output %s, routing_key=%s",
-                              self.output_queue.name, output.name)
+            while True:
+                effect = self.router.next_effect(message)
+                prev_state = message.get_route_state(effect)
+                action = effect.next_action(prev_state)
+
+                if action is None:
+                    # No more effects and actions available, mark message as
+                    # delivered and send stats.
+                    message.log.info("End of delivery pipeline")
+                    return
+
+                if isinstance(action, SendOutputAction):
+                    # send message to output queue
+                    output = action.get_output()
+
+                    await self.output_queue.publish(
+                        message.to_dict(), routing_key=output.name
+                    )
+                    message.log.debug("published to output %s, routing_key=%s",
+                                      self.output_queue.name, output.name)
+                    # TODO: publish not confirmed
+                    return True
+
+                message.log.error("Unhandled action type %s", type(action))
         # pylint: disable=broad-except
         except Exception:  # pragma: no cover
             message.log.exception("Unhandled exception in MessageConsumer")

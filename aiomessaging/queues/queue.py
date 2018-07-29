@@ -20,7 +20,7 @@ class AbstractQueue(ABC):
     """Abstract Queue.
 
     This interface must be implemented for each queue backend and must hide
-    undelaying backend-specific implementation.
+    underlying backend-specific implementation.
 
     Only one consumer allowed per queue by design.
     """
@@ -42,9 +42,9 @@ class AbstractQueue(ABC):
     def consume(self, handler) -> None:
         """Start consume messages.
 
-        Passed handler will be invoked when new message recieved.
+        Passed handler will be invoked when new message received.
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def cancel(self) -> asyncio.Future:
@@ -52,18 +52,18 @@ class AbstractQueue(ABC):
 
         Gracefully stop consumption and close connection without any message
         loss. Queue responsible for unacked messages return and their
-        persistance on the backend. Hides details from consumer.
+        persistence on the backend. Hides details from consumer.
 
-        Return `Future` that will be resolved after succesful cancellation.
+        Return `Future` that will be resolved after successful cancellation.
         """
-        pass
+        pass  # pragma: no cover
 
     async def publish(self, body, routing_key=None):
         """Publish message to the queue.
 
         TODO: bad interface
         """
-        pass
+        pass  # pragma: no cover
 
 
 # pylint: disable=too-many-instance-attributes
@@ -317,7 +317,8 @@ class Queue(AbstractQueue):
         def on_cancelok(method_frame):
             """Handle cancelok.
             """
-            self.log.debug("Cancel ok on CHANNEL%s", method_frame.channel_number)
+            self.log.debug("Cancel ok on CHANNEL%s",
+                           method_frame.channel_number)
         try:
             if self._consumer_tag:
                 self._channel.basic_cancel(

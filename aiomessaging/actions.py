@@ -42,7 +42,7 @@ class SendOutputAction(Action):
         return self.output
 
     def execute(self, message):
-        self.output.send(message)
+        return self.output.send(message)
 
 
 # class CheckOutputAction(Action):

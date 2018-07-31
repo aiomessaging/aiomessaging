@@ -62,4 +62,8 @@ class Router:
 def generator_from_backend_list(backends):
     """Simple generator from list of backends.
     """
-    yield send(*backends)
+    backend_instances = []
+    for backend in backends:
+        backend_cls = class_from_string(backend)
+        backend_instances.append(backend_cls())
+    yield send(*backend_instances)

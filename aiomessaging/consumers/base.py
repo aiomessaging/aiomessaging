@@ -126,11 +126,15 @@ class BaseConsumer:
         self.msg_tasks.append(task)
 
     async def _handler_task(self, body, channel, delivery_tag):
-        # TODO: retry (republish), drop, explicit nack(?) handling
-        await self.handler(body)
-        # TODO: ack only in case of success of handler
-        channel.basic_ack(delivery_tag)
-        # TODO: wait for ack ok
+        try:
+            # TODO: retry (republish), drop, explicit nack(?) handling
+            await self.handler(body)
+            # TODO: ack only in case of success of handler
+            channel.basic_ack(delivery_tag)
+            # TODO: wait for ack ok
+        # pylint: disable=broad-except
+        except Exception:  # pragma: no cover
+            self.log.exception("Error in handler task")
 
     # pylint: disable=unused-argument
     async def handler(self, message):

@@ -55,11 +55,6 @@ class AbstractConsumer(ABC):
 
 class BaseConsumer:
     """Base consumer implementation.
-
-    Produces coroutines:
-
-    - `self.handler` - for each received message
-    - `self._monitoring` - monitor running handlers and remove them if they've finished
     """
     running = False  # determine when we shutdown gracefully
     loop: asyncio.AbstractEventLoop

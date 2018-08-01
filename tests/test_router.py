@@ -70,4 +70,6 @@ def test_send_effect():
 
 
 def test_string_list_init():
-    Router(['tests.tmp.DeliveryBackend'])
+    message = Message(event_id='test_sequence', event_type='example_event')
+    router = Router(['tests.tmp.DeliveryBackend'])
+    router.get_pipeline(message)

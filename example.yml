@@ -20,3 +20,4 @@ events:
       - tests.tmp.ExampleFilter
     output:
       - tests.tmp.DeliveryBackend
+      - tests.tmp.DeliveryBackend2

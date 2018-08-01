@@ -45,3 +45,16 @@ class DeliveryBackend(AbstractOutputBackend):
 
     def send(self, message):
         pass
+
+
+class DeliveryBackend2(AbstractOutputBackend):
+    name = 'sns2'
+
+    def __call__(self, message):
+        pass
+
+    def check(self, message):
+        pass
+
+    def send(self, message):
+        pass

@@ -34,6 +34,7 @@ def class_from_string(class_string, base=None):
         class_string, base
     )
     if base is not None:
+        base_module = None
         try:
             base_module = import_module(base)
             if hasattr(base_module, class_string):
@@ -43,7 +44,10 @@ def class_from_string(class_string, base=None):
             # no class in base location
             logger.debug("No class found in base location")
         finally:
-            tried_paths.append('.'.join([base_module.__name__, class_string]))
+            # collect search paths for logs
+            name = base_module.__name__ if base_module else None
+            segments = filter(lambda x: x, [name, class_string])
+            tried_paths.append('.'.join(segments))
     else:
         logger.debug("No base location provided, skip")
     # module.ClassName -> module.ClassName
@@ -117,7 +121,7 @@ class Serializable:
     def load_args(cls, args):
         """Deserialize arguments.
         """
-        return args
+        return args  # pragma: no cover
 
     @classmethod
     def load_kwargs(cls, kwargs):

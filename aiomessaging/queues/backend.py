@@ -38,13 +38,15 @@ class QueueBackend:
 
     # pylint: disable=too-many-arguments
     def __init__(self, host='localhost', port=5672, username='guest',
-                 password='guest', virtual_host="/", loop=None):
+                 password='guest', virtual_host="/", loop=None,
+                 reconnect_timeout=3):
         self.loop = loop
         self.host = host
         self.port = port
         self.username = username
         self.password = password
         self.virtual_host = virtual_host
+        self.reconnect_timeout = reconnect_timeout
 
         self.log = logger
 
@@ -178,7 +180,7 @@ class QueueBackend:
 
         if not self._normal_close:
             self.log.warning("Not a normal shutdown. Reconnecting after 3s.")
-            self.loop.call_later(3, self.reconnect)
+            self.loop.call_later(self.reconnect_timeout, self.reconnect)
 
     def reconnect(self):
         """Reconnect.

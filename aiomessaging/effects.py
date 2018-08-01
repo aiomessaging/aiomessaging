@@ -20,7 +20,7 @@ def register_effect(effect_cls):
 
     Will raise exception if `name` already registered.
     """
-    if effect_cls.name in _registered_effects:
+    if effect_cls.name in _registered_effects:  # pragma: no cover
         raise Exception(
             "Effect with name %s already registered" % effect_cls.name
         )
@@ -70,7 +70,7 @@ def reset_check_to_pending(state):
     for status in state:
         if status == OutputStatus.CHECK:
             result.append(OutputStatus.PENDING)
-        elif status == OutputStatus.PENDING:
+        elif status == OutputStatus.PENDING:  # pragma: no cover
             raise Exception("Found pending when resetting CHECK")
         else:
             result.append(status)
@@ -119,16 +119,16 @@ class Effect(NamedSerializable, abc.ABC):
     def serialize_state(self, state):
         """Serialize effect state.
         """
-        return state
+        return state  # pragma: no cover
 
     def load_state(self, data):
         """Load serialized effect state.
         """
-        return data
+        return data  # pragma: no cover
     # pylint: enable=no-self-use
 
     def __eq__(self, other):
-        if not isinstance(other, self.__class__):
+        if not isinstance(other, self.__class__):  # pragma: no cover
             raise TypeError("Effect and %s can't be compared" % type(other))
         return self.serialize() == other.serialize()
 

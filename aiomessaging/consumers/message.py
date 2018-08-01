@@ -38,12 +38,6 @@ class MessageConsumer(BaseMessageConsumer):
                 prev_state = message.get_route_state(effect)
                 action = effect.next_action(prev_state)
 
-                if action is None:
-                    # No more effects and actions available, mark message as
-                    # delivered and send stats.
-                    message.log.info("End of delivery pipeline")
-                    return
-
                 if isinstance(action, SendOutputAction):
                     # send message to output queue
                     output = action.get_output()
@@ -56,7 +50,7 @@ class MessageConsumer(BaseMessageConsumer):
                     # TODO: publish not confirmed
                     return True
 
-                message.log.error("Unhandled action type %s", type(action))
+                message.log.error("Unhandled action type %s", type(action))  # pragma: no cover
         # pylint: disable=broad-except
         except Exception:  # pragma: no cover
             message.log.exception("Unhandled exception in MessageConsumer")

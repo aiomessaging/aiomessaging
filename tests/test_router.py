@@ -3,27 +3,9 @@ router test suite
 """
 from aiomessaging.router import Router
 from aiomessaging.message import Message, Route
-from aiomessaging.effects import send, SendEffect, EffectStatus
-from aiomessaging.actions import SendOutputAction
+from aiomessaging.effects import SendEffect, EffectStatus
 
-from .tmp import DeliveryBackend, DeliveryBackend2
-
-
-def simple_pipeline(message):
-    """Simple pipeline.
-
-    Send message through test delivery backend
-    """
-    yield send(DeliveryBackend())
-
-
-def sequence_pipeline(message):
-    """Sequence pipeline.
-
-    Send to test backend twice.
-    """
-    yield send(DeliveryBackend(test_arg=2))
-    yield send(DeliveryBackend2(test_arg=1))
+from .tmp import simple_pipeline, sequence_pipeline, DeliveryBackend
 
 
 def test_simple_pipeline():

@@ -6,6 +6,7 @@ import logging
 from aiomessaging.event import Event
 from aiomessaging.message import Message
 from aiomessaging.outputs import AbstractOutputBackend
+from aiomessaging.effects import send
 
 
 log = logging.getLogger('aiomessaging')
@@ -58,3 +59,20 @@ class DeliveryBackend2(AbstractOutputBackend):
 
     def send(self, message):
         pass
+
+
+def simple_pipeline(message):
+    """Simple pipeline.
+
+    Send message through test delivery backend
+    """
+    yield send(DeliveryBackend())
+
+
+def sequence_pipeline(message):
+    """Sequence pipeline.
+
+    Send to test backend twice.
+    """
+    yield send(DeliveryBackend(test_arg=2))
+    yield send(DeliveryBackend2(test_arg=1))

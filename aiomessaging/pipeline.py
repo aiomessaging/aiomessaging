@@ -4,13 +4,13 @@ import asyncio
 from typing import List
 
 
-class Pipeline:
-    """Base pipeline class.
+class EventPipeline:
+    """Event pipeline.
     """
     def __init__(self, config: List) -> None:
         self.callable_list = config
 
-    async def process(self, value):
+    async def __call__(self, value):
         """Process regarding to pipeline configuration.
         """
         for action in self.callable_list:
@@ -19,41 +19,15 @@ class Pipeline:
                 value = intermediate
         return value
 
-    async def __call__(self, value):
-        return await self.process(value)
 
-
-class ParallelPipeline(Pipeline):
-    """Parallel pipeline.
-
-    Executes steps in parallel (asyncio).
-    """
-    async def process(self, value):
-        """Process value in parallel.
-
-        TODO: copy value object for each item and check conflicts
-        """
-        result = {}
-        data = await asyncio.gather(
-            *(item(value) for item in self.callable_list)
-        )
-        for item in data:
-            if item is not None:
-                result.update(item)
-        return result
-
-
-class EventPipeline(Pipeline):
-    """Event pipeline.
-    """
-    pass
-
-
-class GenerationPipeline(ParallelPipeline):
+class GenerationPipeline:
     """Generation pipeline.
 
     Executes in parallel.
     """
+    def __init__(self, config: List) -> None:
+        self.callable_list = config
+
     async def __call__(self, queue, event):
         childs = self.callable_list
         event.log.debug("Start generation pipeline")

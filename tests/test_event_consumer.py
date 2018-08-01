@@ -19,7 +19,10 @@ async def test_start(event_loop: asyncio.AbstractEventLoop, caplog):
     cluster = Cluster(queue=queue, loop=event_loop)
     await cluster.start()
 
-    pipeline = EventPipeline([])
+    def test_callable(event):
+        return event
+
+    pipeline = EventPipeline([test_callable])
     generators = GenerationPipeline([])
 
     queue = await backend.events_queue('example')

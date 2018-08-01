@@ -6,7 +6,7 @@ from aiomessaging.message import Message, Route
 from aiomessaging.effects import send, SendEffect, EffectStatus
 from aiomessaging.actions import SendOutputAction
 
-from .tmp import DeliveryBackend
+from .tmp import DeliveryBackend, DeliveryBackend2
 
 
 def simple_pipeline(message):
@@ -23,7 +23,7 @@ def sequence_pipeline(message):
     Send to test backend twice.
     """
     yield send(DeliveryBackend(test_arg=2))
-    yield send(DeliveryBackend(test_arg=1))
+    yield send(DeliveryBackend2(test_arg=1))
 
 
 def test_simple_pipeline():
@@ -55,7 +55,6 @@ def test_sequence_send():
     assert message.route
     assert isinstance(message.route[0], Route)
     assert message.route[0].status == EffectStatus.FINISHED
-
     effect = router.next_effect(message)
     assert isinstance(effect, SendEffect)
     assert effect.next_action().get_output().kwargs == {'test_arg': 1}

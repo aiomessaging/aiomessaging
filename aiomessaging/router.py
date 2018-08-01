@@ -16,6 +16,8 @@ class Router:
 
     def next_effect(self, message: Message):
         """Select next effect for message.
+
+        Return `None` if no more routes available.
         """
         pipeline = self.get_pipeline(message)
         send_value = None
@@ -23,10 +25,8 @@ class Router:
             while True:
                 effect = pipeline.send(send_value)
                 status = message.get_route_status(effect)
-
-                if not status == EffectStatus.PENDING and status:
+                if not status == EffectStatus.PENDING:
                     continue
-
                 return effect
         except StopIteration:
             # No more routes available (all finished or failed)
@@ -36,8 +36,12 @@ class Router:
         """Apply next effect for message.
         """
         effect = self.next_effect(message)
-        effect.apply(message)
-        message.set_route_status(effect, EffectStatus.FINISHED)
+        new_state = effect.apply(message)
+        message.set_route_state(effect, new_state)
+        if effect.next_action(message.get_route_state(effect)):
+            message.set_route_status(effect, EffectStatus.PENDING)
+        else:
+            message.set_route_status(effect, EffectStatus.FINISHED)
 
     def get_pipeline(self, message: Message):
         """Get delivery pipeline.

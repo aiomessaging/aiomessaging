@@ -58,13 +58,13 @@ class Message:
 
     def get_route_status(self, effect):
         """Get actual status of effect.
-
-        Return ST_NEW, ST_PENDING, ST_APPLIED, ST_FAILED.
         """
         for route in self.route:
             if route.effect == effect:
                 return route.status
-        return None
+
+        self.route.append(Route(effect, EffectStatus.PENDING))
+        return EffectStatus.PENDING
 
     def set_route_status(self, effect, status):
         """Set effect status.
@@ -81,10 +81,20 @@ class Message:
 
         Return ST_NEW, ST_PENDING, ST_APPLIED, ST_FAILED.
         """
-        for route_effect, state, _ in self.route:
-            if route_effect == effect:
-                return state
+        for route in self.route:
+            if route.effect == effect:
+                return route.state
         return None
+
+    def set_route_state(self, effect, state):
+        """Set route status.
+        """
+        for route in self.route:
+            if route.effect == effect:
+                route.state = state
+                break
+        else:
+            self.route.append(Route(effect, EffectStatus.PENDING, state=state))
 
     def to_dict(self) -> dict:
         """Serialize message to dict.
@@ -138,11 +148,14 @@ class Route:
     def serialize(self):
         """Serialize route.
         """
-        return [self.effect.serialize(), self.status, self.state]
+        return [self.effect.serialize(), self.status.value, self.effect.serialize_state(self.state)]
 
     @classmethod
     def load(cls, data) -> 'Route':
         """Load serialized route to Route object.
         """
-        data[0] = load_effect(data[0])
+        effect = load_effect(data[0])
+        data[0] = effect
+        data[1] = EffectStatus(data[1])
+        data[2] = effect.load_state(data[2])
         return cls(*data)

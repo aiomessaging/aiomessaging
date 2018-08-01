@@ -29,3 +29,17 @@ def test_route_serialize():
     })
 
     assert msg.route[0].serialize() == route.serialize()
+
+
+def test_update_state():
+    message = Message(id='test_message', event_type='test_event')
+    effect = send(DeliveryBackend())
+    message.set_route_state(effect, {'a': 1})
+    assert message.get_route_state(effect) == {'a': 1}
+
+
+def test_set_status():
+    message = Message(id='test_message', event_type='test_event')
+    effect = send(DeliveryBackend())
+    message.set_route_status(effect, 1)
+    assert message.get_route_status(effect) == 1

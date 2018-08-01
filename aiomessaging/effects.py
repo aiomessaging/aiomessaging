@@ -62,7 +62,7 @@ class OutputStatus(enum.Enum):
 
 
 def reset_check_to_pending(state):
-    """Reset all check statuses to pending.
+    """Reset all CHECK statuses to PENDING.
 
     Preserve all other statuses. Raise exception if pending found.
     """
@@ -109,6 +109,24 @@ class Effect(NamedSerializable, abc.ABC):
         """
         pass  # pragma: no cover
 
+    @abc.abstractmethod
+    def apply(self, message):
+        """Apply next action and return next state.
+        """
+        pass  # pragma: no cover
+
+    # pylint: disable=no-self-use
+    def serialize_state(self, state):
+        """Serialize effect state.
+        """
+        return state
+
+    def load_state(self, data):
+        """Load serialized effect state.
+        """
+        return data
+    # pylint: enable=no-self-use
+
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             raise TypeError("Effect and %s can't be compared" % type(other))
@@ -126,7 +144,33 @@ class SendEffect(Effect):
     name = 'send'
 
     def next_action(self, state=None):
-        if state is None:
+        """Next effect action.
+        """
+        state = self.reset_state(state)
+        position = self.next_action_pos(state)
+
+        if position is None:
+            return None
+        selected_output = self.args[position]
+        return SendOutputAction(selected_output)
+
+    def next_action_pos(self, state):
+        """Next effect action position.
+        """
+        state = self.reset_state(state)
+
+        selected_output = None
+        # search next pending backend
+        for i, (_, status) in enumerate(zip(self.args, state)):
+            if status == OutputStatus.PENDING:
+                selected_output = i
+                break
+        return selected_output
+
+    def reset_state(self, state):
+        """Reset state.
+        """
+        if state is None or state == []:
             # create default state with all backends pending
             state = [OutputStatus.PENDING for b in self.args]
 
@@ -136,13 +180,7 @@ class SendEffect(Effect):
         pendings = [s for s in state if s == OutputStatus.PENDING]
         if not pendings:
             state = reset_check_to_pending(state)
-
-        output = None
-        # search next pending backend
-        for output, status in zip(self.args, state):
-            if status == OutputStatus.PENDING:
-                break
-        return SendOutputAction(output)
+        return state
 
     def apply(self, message):
         """Send message through next pending output.
@@ -150,16 +188,28 @@ class SendEffect(Effect):
         Modifies message route. Return state.
         """
         state = message.get_route_state(self)
+        state = self.reset_state(state)
+
+        position = self.next_action_pos(state)
         action = self.next_action(state)
 
         result = action.execute(message)
 
-        if result:
-            # TODO: mark action as successful
-            pass
+        if result is False:  # ignore None
+            state[position] = OutputStatus.FAIL
         else:
-            # TODO: mark action as failed
-            pass
+            state[position] = OutputStatus.SUCCESS
+        return state
+
+    def load_state(self, data):
+        if not data:
+            data = []
+        return [OutputStatus(status['value']) for status in data]
+
+    def serialize_state(self, state):
+        if not state:
+            state = []
+        return state
 
     def serialize_args(self):
         return [b.serialize() for b in self.args]

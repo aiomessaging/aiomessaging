@@ -12,10 +12,11 @@ class OutputConsumer(BaseMessageConsumer):
     event_type: str
     router: Router
 
-    def __init__(self, event_type: str, router: Router, **kwargs) -> None:
+    def __init__(self, event_type: str, router: Router, messages_queue, **kwargs) -> None:
         super().__init__(**kwargs)
         self.event_type = event_type
         self.router = router
+        self.messages_queue = messages_queue
 
     async def handle_message(self, message: Message):
         """
@@ -31,5 +32,11 @@ class OutputConsumer(BaseMessageConsumer):
         self.router.apply_next_effect(message)
         # TODO: this is actual end of pipeline. we need to reschedule message
         #       if next route exists.
+        if self.router.next_effect(message):
+            await self.messages_queue.publish(
+                message.to_dict(), routing_key=message.type
+            )
+            message.log.debug("Message rescheduled on message queue with "
+                              "routing_key=%s", message.type)
         message.log.debug("Message in output handler "
                           "[this is the end for a while]")

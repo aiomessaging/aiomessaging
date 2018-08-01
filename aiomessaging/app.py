@@ -170,9 +170,11 @@ class AiomessagingApp:
         for event_type in self.event_types():
             # TODO: only one backend hardcoded, need to support multiple
             queue = await self.queue.output_queue(event_type, 'sns')
+            messages_queue = await self.queue.messages_queue(event_type)
             self.output_consumers[event_type] = OutputConsumer(
                 router=self.get_router(event_type),
                 event_type=event_type,
+                messages_queue=messages_queue,
                 queue=queue,
                 loop=self.loop
             )

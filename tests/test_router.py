@@ -42,6 +42,12 @@ def test_sequence_send():
     assert effect.next_action().get_output().kwargs == {'test_arg': 1}
 
 
+def test_string_configuration():
+    message = Message(event_id='test_sequence', event_type='example_event')
+    router = Router(output_pipeline='tests.tmp.simple_pipeline')
+    router.get_pipeline(message)
+
+
 def test_send_effect():
     output = DeliveryBackend()
     effect = SendEffect(output)

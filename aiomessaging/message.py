@@ -111,8 +111,6 @@ class Message:
     def from_dict(data: dict) -> 'Message':
         """Load message from provided dict.
         """
-        if 'type' in data:
-            data['event_type'] = data.pop('type')
         data['route'] = [
             Route.load(r) for r in data.get('route', [])
         ]

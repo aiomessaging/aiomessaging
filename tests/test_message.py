@@ -5,6 +5,11 @@ from aiomessaging.effects import send
 from .tmp import DeliveryBackend
 
 
+def test_message_repr():
+    msg = Message(event_type='example_event', event_id='123')
+    repr(msg)
+
+
 def test_route():
     msg = Message(event_type='example_event', event_id='123')
     assert msg.route == []

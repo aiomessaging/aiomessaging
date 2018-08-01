@@ -42,12 +42,3 @@ class AbstractOutputBackend(ABC, Serializable):
         Can raise `NotImplemented()` if backend doesn't support delivery check.
         """
         raise NotImplementedError  # pragma: no cover
-
-
-def _entity_to_string(entity):
-    """Serialize module entity (class or function) to string.
-    """
-    return '.'.join([
-        entity.__module__,
-        entity.__name__
-    ])

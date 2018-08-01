@@ -41,6 +41,10 @@ def test_sequence_send():
     assert isinstance(effect, SendEffect)
     assert effect.next_action().get_output().kwargs == {'test_arg': 1}
 
+    router.apply_next_effect(message)
+
+    assert router.next_effect(message) is None
+
 
 def test_string_configuration():
     message = Message(event_id='test_sequence', event_type='example_event')
@@ -63,3 +67,7 @@ def test_send_effect():
         )],
         {}
     )
+
+
+def test_string_list_init():
+    Router(['tests.tmp.DeliveryBackend'])

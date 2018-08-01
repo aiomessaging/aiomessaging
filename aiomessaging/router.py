@@ -55,7 +55,7 @@ class Router:
             pipeline = self.output_pipeline(message)
         elif isinstance(self.output_pipeline, list):
             pipeline = generator_from_backend_list(self.output_pipeline)
-        else:
+        else:  # pragma: no cover
             raise TypeError(
                 "Type `%s` can't be used for `output_pipeline_argument`"
                 % type(self.output_pipeline)

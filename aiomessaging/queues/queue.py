@@ -155,7 +155,7 @@ class Queue(AbstractQueue):
         try:
             await self.declare()
             self.consume(handler)
-        except pika.exceptions.ChannelClosed:
+        except pika.exceptions.ChannelClosed:  # pragma: no cover
             self.reconnect()
 
     async def publish(self, body, routing_key=None):
@@ -262,7 +262,8 @@ class Queue(AbstractQueue):
                 'Channel closed. Reconnect after 5s. args: %s, kwargs: %s',
                 args, kwargs
             )
-            self._backend.loop.call_later(5, self.reconnect)
+            self._backend.loop.call_later(self._backend.reconnect_timeout,
+                                          self.reconnect)
 
     def on_consume_cancelled(self, *args, **kwargs):
         """Handle consume cancelled event.
@@ -271,7 +272,8 @@ class Queue(AbstractQueue):
             'Consume cancelled. Reconnect after 5s. args: %s, kwargs: %s',
             args, kwargs
         )
-        self._backend.loop.call_later(5, self.reconnect)
+        self._backend.loop.call_later(self._backend.reconnect_timeout,
+                                      self.reconnect)
 
     def reconnect(self):
         """
@@ -291,10 +293,12 @@ class Queue(AbstractQueue):
                         'No consume handler found while reconnecting')
             except pika.exceptions.ChannelClosed:
                 self.log.warning('Channel closed, reconnect')
-                self._backend.loop.call_later(5, self.reconnect)
+                self._backend.loop.call_later(self._backend.reconnect_timeout,
+                                              self.reconnect)
         else:
             self.log.warning('Connection still lost. Retry after 5s.')
-            self._backend.loop.call_later(5, self.reconnect)
+            self._backend.loop.call_later(self._backend.reconnect_timeout,
+                                          self.reconnect)
 
     def need_declare_queue(self):
         """Check if we need to declare queue.

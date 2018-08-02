@@ -3,7 +3,7 @@ import pytest
 
 from aiomessaging.queues import QueueBackend, Queue
 
-from .helpers import has_log_message
+from .helpers import has_log_message, log_count
 
 # import logging; logging.basicConfig(level=logging.DEBUG)
 # logging.getLogger("pika").setLevel(logging.DEBUG)
@@ -38,6 +38,14 @@ async def test_reconnect(event_loop, caplog):
     backend = QueueBackend(reconnect_timeout=0)
     await backend.connect(loop=event_loop)
 
+    def test_handler(*args, **kwargs):
+        pass
+
+    queue = await backend.events_queue('test_reconnect')
+    queue.consume(test_handler)
+
+    await asyncio.sleep(0.1)
+
     backend.connection.close()
 
     await asyncio.sleep(0.1)
@@ -49,3 +57,4 @@ async def test_reconnect(event_loop, caplog):
         # TODO: don't need to stick this log message in tests, bad practice
         message='Connection closed unexpectedly: 200 Normal shutdown'
     )
+    assert log_count(caplog, level='ERROR') == 1

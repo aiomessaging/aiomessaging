@@ -36,7 +36,7 @@ class AbstractQueue(ABC):
 
         Must be implemented.
         """
-        raise NotImplementedError()
+        raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
     def consume(self, handler) -> None:

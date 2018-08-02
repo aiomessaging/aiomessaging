@@ -4,7 +4,6 @@ attr-rgx=([a-z_][a-z0-9_]{2,30}$|id)
 argument-rgx=([a-z_][a-z0-9_]{2,30}$|fp|id)
 const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__)|logger)$
 
-
 [MISCELLANEOUS]
 notes=FIXME,XXX
 

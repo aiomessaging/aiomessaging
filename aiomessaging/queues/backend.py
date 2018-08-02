@@ -29,6 +29,8 @@ class QueueBackend:
     TYPE_FANOUT = 'fanout'
     TYPE_DIRECT = 'direct'
 
+    reconnect_timeout: float
+
     # set to True before expected close
     _normal_close = False
     _reconnect_task = None

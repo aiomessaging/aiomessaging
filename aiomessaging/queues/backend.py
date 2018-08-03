@@ -122,7 +122,7 @@ class QueueBackend:
             self._channels[name] = channel
             try:
                 self._channels_opening[name].set_result(channel)
-            except asyncio.InvalidStateError:
+            except asyncio.InvalidStateError:  # pragma: no cover
                 pass
             future.set_result(channel)
 
@@ -149,7 +149,7 @@ class QueueBackend:
         """
         self.log.debug('CHANNEL%i closed', channel.channel_number)
 
-    def on_open_error_callback(self, *args, **kwargs):
+    def on_open_error_callback(self, *args, **kwargs):  # pragma: no cover
         """Opening error callback.
         """
         # TODO: args
@@ -173,7 +173,7 @@ class QueueBackend:
                            reply_code, reply_text)
 
         # cancel _connecting Future
-        if self._connecting and not self._connecting.done():
+        if self._connecting and not self._connecting.done():  # pragma: no cover
             self.log.error('Cancel _connecting it is not done')
             self._connecting.cancel()
 
@@ -187,7 +187,7 @@ class QueueBackend:
     def reconnect(self):
         """Reconnect.
         """
-        if self._reconnect_task:
+        if self._reconnect_task:  # pragma: no cover
             self.log.debug('Another reconnection task active')
             return
         self.log.debug('Create new connect task')

@@ -175,7 +175,7 @@ class Queue(AbstractQueue):
                 # pylint: disable=c-extension-no-member
                 ujson.dumps(body, ensure_ascii=False),
                 properties)
-        except pika.exceptions.ChannelClosed:
+        except pika.exceptions.ChannelClosed:  # pragma: no cover
             self.log.error(
                 'Message not delivered (%s): %s',
                 routing_key, body
@@ -265,8 +265,10 @@ class Queue(AbstractQueue):
             self._backend.loop.call_later(self._backend.reconnect_timeout,
                                           self.reconnect)
 
-    def on_consume_cancelled(self, *args, **kwargs):
+    def on_consume_cancelled(self, *args, **kwargs):  # pragma: no cover
         """Handle consume cancelled event.
+
+        TODO: arguments
         """
         self.log.warning(
             'Consume cancelled. Reconnect after 5s. args: %s, kwargs: %s',
@@ -288,10 +290,7 @@ class Queue(AbstractQueue):
                     self._backend.loop.create_task(
                         self.declare_and_consume(self._consume_handler)
                     )
-                else:
-                    self.log.error(
-                        'No consume handler found while reconnecting')
-            except pika.exceptions.ChannelClosed:
+            except pika.exceptions.ChannelClosed:  # pragma: no cover
                 self.log.warning('Channel closed, reconnect')
                 self._backend.loop.call_later(self._backend.reconnect_timeout,
                                               self.reconnect)
@@ -299,14 +298,6 @@ class Queue(AbstractQueue):
             self.log.warning('Connection still lost. Retry after 5s.')
             self._backend.loop.call_later(self._backend.reconnect_timeout,
                                           self.reconnect)
-
-    def need_declare_queue(self):
-        """Check if we need to declare queue.
-
-        Return True if queue name defined so we can consume messages from our
-        abstract queue.
-        """
-        return self.name is not None
 
     def close(self):
         """Close queue and channel.
@@ -329,13 +320,8 @@ class Queue(AbstractQueue):
                     on_cancelok,
                     self._consumer_tag
                 )
-        except pika.exceptions.ChannelClosed:
+        except pika.exceptions.ChannelClosed:  # pragma: no cover
             self.log.warning('Channel already closed while closing queue')
-
-    def on_cancelok(self, method_frame):
-        """Handle cancelok.
-        """
-        self.log.debug("Cancel ok on CHANNEL%s", method_frame.channel_number)
 
     def __repr__(self):
         """Queue representation.

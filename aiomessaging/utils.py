@@ -40,7 +40,7 @@ def class_from_string(class_string, base=None):
             if hasattr(base_module, class_string):
                 logger.debug("Class found for %s", class_string)
                 return getattr(base_module, class_string)
-        except ImportError:
+        except ImportError:  # pragma: no cover
             # no class in base location
             logger.debug("No class found in base location")
         finally:
@@ -56,7 +56,7 @@ def class_from_string(class_string, base=None):
         try:
             module = import_module('.'.join(parts[0:-1]))
             return getattr(module, parts[-1])
-        except ImportError as e:
+        except ImportError as e:  # pragma: no cover
             logger.error(
                 'Cant find %s %s %s', '.'.join(parts[0:-1]), parts[-1], e
             )

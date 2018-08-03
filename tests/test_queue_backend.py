@@ -5,9 +5,6 @@ from aiomessaging.queues import QueueBackend, Queue
 
 from .helpers import has_log_message, log_count
 
-# import logging; logging.basicConfig(level=logging.DEBUG)
-# logging.getLogger("pika").setLevel(logging.DEBUG)
-
 
 @pytest.mark.asyncio
 async def test_connect(event_loop, caplog):

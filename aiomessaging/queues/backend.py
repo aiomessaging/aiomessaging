@@ -99,7 +99,7 @@ class QueueBackend:
         """
         future = asyncio.Future(loop=self.loop)
 
-        if not self._connecting.done():
+        if not self._connecting.done():  # pragma: no cover
             self.log.debug('Await connecting...')
             await self._connecting
 
@@ -218,7 +218,7 @@ class QueueBackend:
     async def generation_queue(self, event_type=None, name=None) -> Queue:
         """Declare tmp generation queue.
         """
-        if not any([event_type, name]):
+        if not any([event_type, name]):  # pragma: no cover
             raise Exception("You must provide event_type or name")
         if name is None:
             name = gen_id(f"gen.{event_type}")

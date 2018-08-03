@@ -4,6 +4,7 @@ router test suite
 from aiomessaging.router import Router
 from aiomessaging.message import Message, Route
 from aiomessaging.effects import SendEffect, EffectStatus
+from aiomessaging.actions import SendOutputAction
 
 from .tmp import simple_pipeline, sequence_pipeline, DeliveryBackend
 
@@ -72,4 +73,8 @@ def test_send_effect():
 def test_string_list_init():
     message = Message(event_id='test_sequence', event_type='example_event')
     router = Router(['tests.tmp.DeliveryBackend'])
-    router.get_pipeline(message)
+    pipeline = router.get_pipeline(message)
+    effect = pipeline.send(None)
+    action = effect.next_action()
+    assert isinstance(action, SendOutputAction)
+    assert isinstance(action.output, DeliveryBackend)

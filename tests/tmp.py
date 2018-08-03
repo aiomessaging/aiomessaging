@@ -66,7 +66,7 @@ def simple_pipeline(message):
 
     Send message through test delivery backend
     """
-    yield send(DeliveryBackend())
+    yield send(DeliveryBackend(), DeliveryBackend2())
 
 
 def sequence_pipeline(message):

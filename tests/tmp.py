@@ -48,6 +48,11 @@ class DeliveryBackend(AbstractOutputBackend):
         pass
 
 
+class FailingDeliveryBackend(DeliveryBackend):
+    def send(self, message):
+        return False
+
+
 class DeliveryBackend2(AbstractOutputBackend):
     name = 'sns2'
 

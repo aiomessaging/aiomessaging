@@ -31,7 +31,7 @@ class Message:
     route: List['Route']
     log: MessageLoggerAdapter
 
-    # pylint: disable=redefined-builtin,too-many-arguments
+    # pylint: disable=redefined-builtin
     def __init__(self, id=None, event_id=None, event_type=None, content=None,
                  meta=None, route=None):
 
@@ -107,6 +107,8 @@ class Message:
             'route': [r.serialize() for r in self.route]
         }
 
+    serialize = to_dict
+
     @staticmethod
     def from_dict(data: dict) -> 'Message':
         """Load message from provided dict.
@@ -115,6 +117,8 @@ class Message:
             Route.load(r) for r in data.get('route', [])
         ]
         return Message(**data)
+
+    load = from_dict
 
     def __repr__(self):
         """Instance representation.

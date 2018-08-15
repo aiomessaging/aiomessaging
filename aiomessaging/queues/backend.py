@@ -38,7 +38,6 @@ class QueueBackend:
     _channels: Dict[str, pika.channel.Channel]
     _channels_opening: Dict[str, asyncio.Future]
 
-    # pylint: disable=too-many-arguments
     def __init__(self, host='localhost', port=5672, username='guest',
                  password='guest', virtual_host="/", loop=None,
                  reconnect_timeout=3):
@@ -143,7 +142,6 @@ class QueueBackend:
                               properties)
         channel.close()
 
-    # pylint: disable=unused-argument
     def on_channel_closed(self, channel, reply_code, reply_text):
         """Handle channel closed event.
         """
@@ -155,14 +153,12 @@ class QueueBackend:
         # TODO: args
         self.log.error('Opening error. Args: %s Kwargs: %s', args, kwargs)
 
-    # pylint: disable=unused-argument
     def on_connection_open(self, connection):
         """Connection opened callback.
         """
         self._reconnect_task = None
         self._connecting.set_result(True)
 
-    # pylint: disable=unused-argument
     def on_connection_closed(self, connection, reply_code, reply_text):
         """Connection closed callback.
         """

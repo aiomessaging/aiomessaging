@@ -107,7 +107,6 @@ class BaseConsumer:
                     self.msg_tasks.remove(task)
                     del task
 
-    # pylint: disable=unused-argument,too-many-arguments
     def _handler(self, queue, channel, basic_deliver, properties, body):
         self.log.debug('Start task execution (_handler): %s', body)
         # pylint: disable=c-extension-no-member
@@ -131,7 +130,6 @@ class BaseConsumer:
         except Exception:  # pragma: no cover
             self.log.exception("Error in handler task")
 
-    # pylint: disable=unused-argument
     async def handler(self, message):
         """Queue message handler.
 

@@ -87,7 +87,6 @@ class Queue(AbstractQueue):
     _channel: pika.channel.Channel
     _normal_close = False
 
-    # pylint: disable=too-many-arguments
     def __init__(self, backend, name=None, exchange=None, exchange_type=None,
                  routing_key=None, auto_delete=True, durable=False):
         self._name = name
@@ -187,7 +186,6 @@ class Queue(AbstractQueue):
         # pylint: disable=protected-access
         future = self._backend._create_future()
 
-        # pylint: disable=unused-argument
         def on_delete(method_frame):
             future.set_result(True)
             self.log.debug('deleted')

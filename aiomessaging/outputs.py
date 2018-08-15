@@ -8,6 +8,18 @@ from .message import Message
 from .utils import Serializable
 
 
+class NoDeliveryCheck(Exception):
+    """Backend has no delivery check exception.
+
+    Raised from output backends `send` method if no delivery check applied to
+    this backend.
+
+    It is not builtin `NotImplemented` because pylint thought that it is
+    abstract and mark all child classes with error.
+    """
+    pass
+
+
 class AbstractOutputBackend(ABC, Serializable):
 
     """Abstract output backend.
@@ -35,10 +47,9 @@ class AbstractOutputBackend(ABC, Serializable):
         """
         pass  # pragma: no cover
 
-    @abstractmethod
     def check(self, message: Message):
         """Check delivery status for message.
 
         Can raise `NotImplemented()` if backend doesn't support delivery check.
         """
-        raise NotImplementedError  # pragma: no cover
+        raise NoDeliveryCheck  # pragma: no cover

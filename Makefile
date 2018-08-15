@@ -1,11 +1,17 @@
-ifeq ($(shell uname), Darwin)
-	PTW_SUFFIX=--onfail "growlnotify -m \"Tests failed\""
-else
-	PTW_SUFFIX=
-endif
-
 export PYTHONPATH=.
 PYTEST_COV_PARAMS=--cov-report=term-missing --cov aiomessaging --cov-report xml:cov.xml
+
+.PHONY: docs
+
+run:
+	python -m aiomessaging
+
+send:
+	python send.py
+
+docs:
+	$(MAKE) -C docs/ html
+	open docs/_build/html/index.html
 
 clean: pyclean
 	rabbitmqctl stop_app
@@ -30,9 +36,3 @@ test-watch:
 lint:
 	pylint aiomessaging
 	mypy aiomessaging --ignore-missing-imports
-
-run:
-	python -m aiomessaging
-
-send:
-	python send.py

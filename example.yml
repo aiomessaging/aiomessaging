@@ -19,5 +19,5 @@ events:
     message_pipeline:
       - tests.tmp.ExampleFilter
     output:
-      - tests.tmp.DeliveryBackend
-      - tests.tmp.DeliveryBackend2
+      - aiomessaging.contrib.dummy.NullOutput
+      - aiomessaging.contrib.dummy.ConsoleOutput

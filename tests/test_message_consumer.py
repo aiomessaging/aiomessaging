@@ -1,3 +1,6 @@
+"""
+Message consumer tests.
+"""
 import asyncio
 import pytest
 
@@ -5,15 +8,16 @@ from aiomessaging.consumers import MessageConsumer
 from aiomessaging.message import Message
 from aiomessaging.queues import QueueBackend
 from aiomessaging.router import Router
-
+from aiomessaging.contrib.dummy import NullOutput
 from aiomessaging.effects import send
 
-from .tmp import DeliveryBackend
 from .helpers import has_log_message
 
 
 @pytest.mark.asyncio
 async def test_simple(event_loop, caplog):
+    """Send message to output backend and check no errors happens.
+    """
     backend = QueueBackend()
     await backend.connect()
     output_queue = await backend.output_queue('example_event', 'sns')
@@ -39,4 +43,6 @@ async def test_simple(event_loop, caplog):
 
 
 def example_pipeline(message):
-    yield send(DeliveryBackend())
+    """Example output pipeline.
+    """
+    yield send(NullOutput())

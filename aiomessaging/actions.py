@@ -45,18 +45,21 @@ class SendOutputAction(Action):
         return self.output.send(message)
 
 
-# class CheckOutputAction(Action):
-#
-#     """Action: check message delivery on output.
-#
-#     Adds check task to output queue instead of direct `check` call.
-#     """
-#
-#     def __init__(self, output):
-#         self.output = output
-#
-#     def get_output(self):
-#         return self.output
+class CheckOutputAction(Action):
+
+    """Action: check message delivery on output.
+
+    Adds check task to output queue instead of direct `check` call.
+    """
+
+    def __init__(self, output):
+        self.output = output
+
+    def get_output(self):
+        return self.output
+
+    def execute(self, message):
+        return self.output.check(message)
 
 
 # class CallAction(Action):

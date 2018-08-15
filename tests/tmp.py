@@ -5,8 +5,13 @@ import logging
 
 from aiomessaging.event import Event
 from aiomessaging.message import Message
-from aiomessaging.outputs import AbstractOutputBackend
 from aiomessaging.effects import send
+from aiomessaging.contrib.dummy import (
+    NullOutput,
+    FailingOutput,
+    ConsoleOutput,
+    CheckOutput,
+)
 
 
 log = logging.getLogger('aiomessaging')
@@ -35,43 +40,12 @@ class OneMessage:
         #     await tmp_queue.put(Message(event=event, content={'a': i}))
 
 
-class DeliveryBackend(AbstractOutputBackend):
-    name = 'sns'
-
-    def __call__(self, message):
-        pass
-
-    def check(self, message):
-        pass
-
-    def send(self, message):
-        pass
-
-
-class FailingDeliveryBackend(DeliveryBackend):
-    def send(self, message):
-        return False
-
-
-class DeliveryBackend2(AbstractOutputBackend):
-    name = 'sns2'
-
-    def __call__(self, message):
-        pass
-
-    def check(self, message):
-        pass
-
-    def send(self, message):
-        pass
-
-
 def simple_pipeline(message):
     """Simple pipeline.
 
     Send message through test delivery backend
     """
-    yield send(DeliveryBackend(), DeliveryBackend2())
+    yield send(NullOutput(), NullOutput())
 
 
 def sequence_pipeline(message):
@@ -79,5 +53,18 @@ def sequence_pipeline(message):
 
     Send to test backend twice.
     """
-    yield send(DeliveryBackend(test_arg=2))
-    yield send(DeliveryBackend2(test_arg=1))
+    yield send(NullOutput(test_arg=2))
+    yield send(NullOutput(test_arg=1))
+
+
+def failing_output_pipeline(message):
+    yield send(FailingOutput())
+
+
+def check_output_pipeline(message):
+    yield send(CheckOutput())
+
+
+def all_dummy_pipeline(message):
+    for dummy_output in (ConsoleOutput, CheckOutput):
+        yield send(dummy_output())

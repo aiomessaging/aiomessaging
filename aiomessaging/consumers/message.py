@@ -4,7 +4,7 @@ from ..message import Message
 from ..router import Router
 
 from .base import BaseMessageConsumer
-from ..actions import SendOutputAction
+from ..actions import SendOutputAction, CheckOutputAction
 
 
 class MessageConsumer(BaseMessageConsumer):
@@ -38,7 +38,7 @@ class MessageConsumer(BaseMessageConsumer):
                 prev_state = message.get_route_state(effect)
                 action = effect.next_action(prev_state)
 
-                if isinstance(action, SendOutputAction):
+                if isinstance(action, (SendOutputAction, CheckOutputAction)):
                     # send message to output queue
                     output = action.get_output()
 

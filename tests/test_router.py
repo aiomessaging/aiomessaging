@@ -5,8 +5,9 @@ from aiomessaging.router import Router
 from aiomessaging.message import Message, Route
 from aiomessaging.effects import SendEffect, EffectStatus
 from aiomessaging.actions import SendOutputAction
+from aiomessaging.contrib.dummy import NullOutput
 
-from .tmp import simple_pipeline, sequence_pipeline, DeliveryBackend
+from .tmp import simple_pipeline, sequence_pipeline
 
 
 def test_simple_pipeline():
@@ -26,6 +27,8 @@ def test_simple_pipeline():
 
 
 def test_sequence_send():
+    """Test sequence pipeline flow.
+    """
     router = Router(output_pipeline=sequence_pipeline)
     message = Message(event_id='test_sequence', event_type='example_event')
 
@@ -48,13 +51,18 @@ def test_sequence_send():
 
 
 def test_string_configuration():
+    """Test string output pipeline configuration allowed.
+    """
     message = Message(event_id='test_sequence', event_type='example_event')
     router = Router(output_pipeline='tests.tmp.simple_pipeline')
     router.get_pipeline(message)
 
 
 def test_send_effect():
-    output = DeliveryBackend()
+    """
+    TODO: move to test_effects
+    """
+    output = NullOutput()
     effect = SendEffect(output)
 
     serialized = effect.serialize()
@@ -62,7 +70,7 @@ def test_send_effect():
     assert serialized == (
         'send',
         [(
-            'tests.tmp.DeliveryBackend',
+            'aiomessaging.contrib.dummy.output.NullOutput',
             (),
             {}
         )],
@@ -71,10 +79,12 @@ def test_send_effect():
 
 
 def test_string_list_init():
+    """Test pipeline initialization from string (class) list.
+    """
     message = Message(event_id='test_sequence', event_type='example_event')
-    router = Router(['tests.tmp.DeliveryBackend'])
+    router = Router(['tests.tmp.NullOutput'])
     pipeline = router.get_pipeline(message)
     effect = pipeline.send(None)
     action = effect.next_action()
     assert isinstance(action, SendOutputAction)
-    assert isinstance(action.output, DeliveryBackend)
+    assert isinstance(action.output, NullOutput)

@@ -1,12 +1,27 @@
-from aiomessaging.message import Message
-from aiomessaging.effects import SendEffect, OutputStatus, reset_check_to_pending
-from aiomessaging.actions import SendOutputAction
+"""
+Output pipeline effects test.
+"""
+import pytest
+import logging
 
-from .tmp import DeliveryBackend, FailingDeliveryBackend
+from aiomessaging.message import Message
+from aiomessaging.effects import (
+    SendEffect,
+    OutputStatus,
+)
+from aiomessaging.actions import SendOutputAction, CheckOutputAction
+
+from aiomessaging.contrib.dummy import NullOutput, FailingOutput, CheckOutput
+
+
+logging.getLogger('aiomessaging').setLevel(logging.DEBUG)
+logging.getLogger('aiomessaging.utils').setLevel(logging.INFO)
 
 
 def test_send_simple():
-    effect = SendEffect(DeliveryBackend())
+    """Check that SendEffect returns provided output.
+    """
+    effect = SendEffect(NullOutput())
     message = Message(id='test_send_simple', event_type="test_event")
     assert isinstance(effect.next_action(), SendOutputAction)
     state = effect.apply(message)
@@ -14,13 +29,21 @@ def test_send_simple():
 
 
 def test_failing_action():
+    """Test that failing output properly handled.
+    """
     message = Message(id='test_send_simple', event_type="test_event")
-    effect = SendEffect(FailingDeliveryBackend())
-    effect.apply(message)
+    effect = SendEffect(FailingOutput())
+    with pytest.raises(Exception):
+        effect.apply(message)
 
 
-def test_reset_check_to_pending():
-    state = [OutputStatus.CHECK, OutputStatus.CHECK]
-    state = reset_check_to_pending(state)
-    assert state[0] == OutputStatus.PENDING
-    assert state[1] == OutputStatus.PENDING
+def test_next_action(caplog):
+    message = Message(id='test_send_simple', event_type="test_event")
+    effect = SendEffect(CheckOutput())
+    state = effect.apply(message)
+    assert state == [OutputStatus.CHECK]
+    message.set_route_state(effect, state)
+    action = effect.next_action(state)
+    assert isinstance(action, CheckOutputAction)
+    state = effect.apply(message)
+    assert state == [OutputStatus.SUCCESS]

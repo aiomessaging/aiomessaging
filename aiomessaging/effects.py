@@ -4,15 +4,19 @@ pipeline effects
 import sys
 import abc
 import enum
+import logging
 
 from typing import Dict, Optional
 
-from .actions import Action, SendOutputAction
+from .actions import Action, SendOutputAction, CheckOutputAction
+from .exceptions import CheckDelivery
 
 from .utils import NamedSerializable, class_from_string
 
 
 _registered_effects: Dict = {}
+
+logger = logging.getLogger()
 
 
 def register_effect(effect_cls):
@@ -59,22 +63,6 @@ class OutputStatus(enum.Enum):
     CHECK = 2
     SUCCESS = 3
     FAIL = 4
-
-
-def reset_check_to_pending(state):
-    """Reset all CHECK statuses to PENDING.
-
-    Preserve all other statuses. Raise exception if pending found.
-    """
-    result = []
-    for status in state:
-        if status == OutputStatus.CHECK:
-            result.append(OutputStatus.PENDING)
-        elif status == OutputStatus.PENDING:  # pragma: no cover
-            raise Exception("Found pending when resetting CHECK")
-        else:
-            result.append(status)
-    return result
 
 
 class Effect(NamedSerializable, abc.ABC):
@@ -152,7 +140,11 @@ class SendEffect(Effect):
         if position is None:
             return None
         selected_output = self.args[position]
-        return SendOutputAction(selected_output)
+
+        if state[position] == OutputStatus.CHECK:
+            return CheckOutputAction(selected_output)
+        else:
+            return SendOutputAction(selected_output)
 
     def next_action_pos(self, state):
         """Next effect action position.
@@ -165,6 +157,11 @@ class SendEffect(Effect):
             if status == OutputStatus.PENDING:
                 selected_output = i
                 break
+        else:
+            for i, (_, status) in enumerate(zip(self.args, state)):
+                if status == OutputStatus.CHECK:
+                    selected_output = i
+                    break
         return selected_output
 
     def reset_state(self, state):
@@ -176,10 +173,6 @@ class SendEffect(Effect):
 
         assert len(state) == len(self.args), "State and args length must match"
 
-        # check if no pending in state and reset if it was
-        pendings = [s for s in state if s == OutputStatus.PENDING]
-        if not pendings:
-            state = reset_check_to_pending(state)
         return state
 
     def apply(self, message):
@@ -193,23 +186,26 @@ class SendEffect(Effect):
         position = self.next_action_pos(state)
         action = self.next_action(state)
 
-        result = action.execute(message)
+        try:
+            result = action.execute(message)
 
-        if result is False:  # ignore None
-            state[position] = OutputStatus.FAIL
-        else:
-            state[position] = OutputStatus.SUCCESS
+            if result is False:  # ignore None
+                state[position] = OutputStatus.FAIL
+            else:
+                state[position] = OutputStatus.SUCCESS
+        except CheckDelivery:
+            state[position] = OutputStatus.CHECK
         return state
 
     def load_state(self, data):
         if not data:
             data = []
-        return [OutputStatus(status['value']) for status in data]
+        return [OutputStatus(status) for status in data]
 
     def serialize_state(self, state):
         if not state:
             state = []
-        return state
+        return [status.value for status in state]
 
     def serialize_args(self):
         return [b.serialize() for b in self.args]

@@ -20,4 +20,4 @@ events:
     message_pipeline:
       - tests.tmp.ExampleFilter
     output:
-      - tests.tmp.DeliveryBackend
+      - aiomessaging.contrib.dummy.NullOutput

@@ -1,11 +1,7 @@
-import pytest
 import asyncio
-import logging
+import pytest
 
 from aiomessaging.app import AiomessagingApp
-
-
-logging.getLogger('aiomessaging').setLevel(logging.DEBUG)
 
 
 def test_sync(event_loop, app):
@@ -37,4 +33,6 @@ async def test_listen_generation(event_loop, app):
 
 @pytest.fixture()
 def app():
+    """App fixture with testing config.
+    """
     return AiomessagingApp(config='tests/testing.yml')

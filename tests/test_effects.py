@@ -2,7 +2,6 @@
 Output pipeline effects test.
 """
 import pytest
-import logging
 
 from aiomessaging.message import Message
 from aiomessaging.effects import (
@@ -17,10 +16,6 @@ from aiomessaging.contrib.dummy import (
     CheckOutput,
     NeverDeliveredOutput,
 )
-
-
-logging.getLogger('aiomessaging').setLevel(logging.DEBUG)
-logging.getLogger('aiomessaging.utils').setLevel(logging.INFO)
 
 
 def test_send_simple():
@@ -48,6 +43,7 @@ def test_never_delivered():
     message = Message(id='test_send_simple', event_type="test_event")
     effect = SendEffect(NeverDeliveredOutput())
     effect.apply(message)
+
 
 def test_next_action(caplog):
     message = Message(id='test_send_simple', event_type="test_event")

@@ -1,11 +1,8 @@
 """
 Output consumer test suite.
 """
-import logging
 import asyncio
 import pytest
-
-from aiomessaging.contrib.dummy import CheckOutput
 
 # pylint:disable=unused-import
 from .fixtures import backend  # noqa
@@ -19,13 +16,8 @@ from .helpers import (
 from .tmp import (
     sequence_pipeline,
     failing_output_pipeline,
-    check_output_pipeline,
     all_dummy_pipeline,
 )
-
-
-logging.getLogger('aiomessaging').setLevel(logging.DEBUG)
-logging.getLogger('aiomessaging.utils').setLevel(logging.INFO)
 
 
 @pytest.mark.asyncio

@@ -30,7 +30,8 @@ class OneMessage:
         pass
 
     async def __call__(self, event: Event, tmp_queue):
-        message = Message(event_type=event.type, event_id=event.id, content={'a': 'something'})
+        message = Message(event_type=event.type, event_id=event.id,
+                          content={'a': 'something'})
         await tmp_queue.publish(
             body=message.to_dict(),
             routing_key=tmp_queue.routing_key
@@ -59,10 +60,6 @@ def sequence_pipeline(message):
 
 def failing_output_pipeline(message):
     yield send(FailingOutput())
-
-
-def check_output_pipeline(message):
-    yield send(CheckOutput())
 
 
 def all_dummy_pipeline(message):

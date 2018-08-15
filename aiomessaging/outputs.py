@@ -47,6 +47,7 @@ class AbstractOutputBackend(ABC, Serializable):
         """
         pass  # pragma: no cover
 
+    # pylint:disable=no-self-use
     def check(self, message: Message):
         """Check delivery status for message.
 

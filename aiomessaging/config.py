@@ -144,7 +144,13 @@ class Config(BaseConfig):
         """
         return AttrDict(self.events[event_type])
 
+    # pylint:disable=no-self-use
     def get_enabled_outputs(self, event_type):
+        """Get enabled outputs for this provided event type.
+
+        TODO: we need a way to get this list from config directly or from
+              pipeline (problem with generator)
+        """
         return ('null', 'console')
 
     def get_log_format(self):

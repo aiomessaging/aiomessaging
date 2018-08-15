@@ -143,8 +143,7 @@ class SendEffect(Effect):
 
         if state[position] == OutputStatus.CHECK:
             return CheckOutputAction(selected_output)
-        else:
-            return SendOutputAction(selected_output)
+        return SendOutputAction(selected_output)
 
     def next_action_pos(self, state):
         """Next effect action position.

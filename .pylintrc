@@ -9,6 +9,6 @@ notes=FIXME,XXX
 
 [MESSAGES CONTROL]
 disable=invalid-name,
-        too-few-public-methods
-        too-many-arguments
+        too-few-public-methods,
+        too-many-arguments,
         unused-argument

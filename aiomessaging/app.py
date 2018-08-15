@@ -4,6 +4,7 @@ import os
 import asyncio
 import logging
 import logging.config
+from collections import defaultdict
 
 from .config import Config
 from .consumers import EventConsumer
@@ -31,7 +32,7 @@ class AiomessagingApp:
     def __init__(self, config=None, loop=None):
         self.event_consumers = {}
         self.message_consumers = {}
-        self.output_consumers = {}
+        self.output_consumers = defaultdict(dict)
         self.loop = loop
 
         self.set_event_loop(loop)
@@ -168,17 +169,17 @@ class AiomessagingApp:
         """Create output consumers.
         """
         for event_type in self.event_types():
-            # TODO: only one backend hardcoded, need to support multiple
-            queue = await self.queue.output_queue(event_type, 'sns')
-            messages_queue = await self.queue.messages_queue(event_type)
-            self.output_consumers[event_type] = OutputConsumer(
-                router=self.get_router(event_type),
-                event_type=event_type,
-                messages_queue=messages_queue,
-                queue=queue,
-                loop=self.loop
-            )
-            await self.output_consumers[event_type].start()
+            for output in self.config.get_enabled_outputs(event_type):
+                queue = await self.queue.output_queue(event_type, output)
+                messages_queue = await self.queue.messages_queue(event_type)
+                self.output_consumers[output][event_type] = OutputConsumer(
+                    router=self.get_router(event_type),
+                    event_type=event_type,
+                    messages_queue=messages_queue,
+                    queue=queue,
+                    loop=self.loop
+                )
+                await self.output_consumers[output][event_type].start()
 
     def get_router(self, event_type) -> Router:
         """Get router instance for event type.
@@ -220,7 +221,8 @@ class AiomessagingApp:
 
         await stop_all(self.event_consumers)
         await stop_all(self.message_consumers)
-        await stop_all(self.output_consumers)
+        for group in self.output_consumers.values():
+            await stop_all(group)
 
         await self.queue.close()
         self.log.info("Shutdown complete.")

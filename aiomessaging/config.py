@@ -144,6 +144,9 @@ class Config(BaseConfig):
         """
         return AttrDict(self.events[event_type])
 
+    def get_enabled_outputs(self, event_type):
+        return ('null', 'console')
+
     def get_log_format(self):
         """Log format.
         """

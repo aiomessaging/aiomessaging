@@ -55,6 +55,19 @@ class FailingOutput(AbstractOutputBackend):
         raise Exception("FailingOutput fail (just test)")
 
 
+class NeverDeliveredOutput(AbstractOutputBackend):
+
+    """Output that never deliver message.
+
+    `send` will always return false. Used in tests.
+    """
+
+    name = 'never'
+
+    def send(self, message: Message):
+        return False
+
+
 class CheckOutput(AbstractOutputBackend):
 
     """Send message and check delivery.

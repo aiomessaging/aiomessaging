@@ -11,7 +11,12 @@ from aiomessaging.effects import (
 )
 from aiomessaging.actions import SendOutputAction, CheckOutputAction
 
-from aiomessaging.contrib.dummy import NullOutput, FailingOutput, CheckOutput
+from aiomessaging.contrib.dummy import (
+    NullOutput,
+    FailingOutput,
+    CheckOutput,
+    NeverDeliveredOutput,
+)
 
 
 logging.getLogger('aiomessaging').setLevel(logging.DEBUG)
@@ -36,6 +41,13 @@ def test_failing_action():
     with pytest.raises(Exception):
         effect.apply(message)
 
+
+def test_never_delivered():
+    """Test send through NeverDeliveredOutput
+    """
+    message = Message(id='test_send_simple', event_type="test_event")
+    effect = SendEffect(NeverDeliveredOutput())
+    effect.apply(message)
 
 def test_next_action(caplog):
     message = Message(id='test_send_simple', event_type="test_event")

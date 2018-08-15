@@ -8,6 +8,7 @@ from .output import (
     ConsoleOutput,
     FailingOutput,
     CheckOutput,
+    NeverDeliveredOutput,
 )
 
 __all__ = [
@@ -15,4 +16,5 @@ __all__ = [
     'ConsoleOutput',
     'FailingOutput',
     'CheckOutput',
+    'NeverDeliveredOutput',
 ]

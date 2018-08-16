@@ -13,3 +13,15 @@ script:
   - pylint aiomessaging
 after_success:
   - codecov
+stages:
+  - test
+  - lint
+jobs:
+  include:
+    - stage: lint
+      script:
+        - pylint aiomessaging
+        - mypy aiomessaging --ignore-missing-imports
+    - stage: test
+      script:
+        - pytest --cov-report=term-missing --cov aiomessaging

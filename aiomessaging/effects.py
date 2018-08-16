@@ -9,7 +9,7 @@ import logging
 from typing import Dict, Optional
 
 from .actions import Action, SendOutputAction, CheckOutputAction
-from .exceptions import CheckDelivery
+from .exceptions import CheckDelivery, Retry
 
 from .utils import NamedSerializable, class_from_string
 
@@ -184,9 +184,10 @@ class SendEffect(Effect):
 
         position = self.next_action_pos(state)
         action = self.next_action(state)
+        retry = message.get_route_retry(self)
 
         try:
-            result = action.execute(message)
+            result = action.execute(message, retry)
 
             if result is False:  # ignore None
                 state[position] = OutputStatus.FAIL
@@ -194,6 +195,10 @@ class SendEffect(Effect):
                 state[position] = OutputStatus.SUCCESS
         except CheckDelivery:
             state[position] = OutputStatus.CHECK
+        except Retry:
+            prev = message.get_route_retry(self)
+            message.set_route_retry(self, prev + 1)
+
         return state
 
     def load_state(self, data):

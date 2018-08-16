@@ -9,6 +9,7 @@ from .output import (
     FailingOutput,
     CheckOutput,
     NeverDeliveredOutput,
+    RetryOutput,
 )
 
 __all__ = [
@@ -17,4 +18,5 @@ __all__ = [
     'FailingOutput',
     'CheckOutput',
     'NeverDeliveredOutput',
+    'RetryOutput',
 ]

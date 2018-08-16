@@ -96,6 +96,22 @@ class Message:
         else:
             self.route.append(Route(effect, EffectStatus.PENDING, state=state))
 
+    def get_route_retry(self, effect):
+        """Get number of retries for effect.
+        """
+        for route in self.route:
+            if route.effect == effect:
+                return route.retry_count
+        return 0
+
+    def set_route_retry(self, effect, retry_count):
+        """Set number of retries for route.
+        """
+        for route in self.route:
+            if route.effect == effect:
+                route.retry_count = retry_count
+                return
+
     def to_dict(self) -> dict:
         """Serialize message to dict.
         """
@@ -133,24 +149,32 @@ class Route:
 
     State may be any json-serializable object.
     """
-    __slots__ = ['effect', 'status', 'state']
+    __slots__ = ['effect', 'status', 'state', 'retry_count']
 
     effect: Effect
     status: EffectStatus
     state: Any
+    retry_count: int
 
     def __init__(self,
                  effect: Effect,
                  status: EffectStatus = EffectStatus.PENDING,
-                 state=None) -> None:
+                 state=None,
+                 retry_count=0) -> None:
         self.effect = effect
         self.status = status
         self.state = state
+        self.retry_count = retry_count
 
     def serialize(self):
         """Serialize route.
         """
-        return [self.effect.serialize(), self.status.value, self.effect.serialize_state(self.state)]
+        return [
+            self.effect.serialize(),
+            self.status.value,
+            self.effect.serialize_state(self.state),
+            self.retry_count
+        ]
 
     @classmethod
     def load(cls, data) -> 'Route':

@@ -9,8 +9,10 @@ from aiomessaging.effects import send
 from aiomessaging.contrib.dummy import (
     NullOutput,
     FailingOutput,
+    NeverDeliveredOutput,
     ConsoleOutput,
     CheckOutput,
+    RetryOutput,
 )
 
 
@@ -63,5 +65,12 @@ def failing_output_pipeline(message):
 
 
 def all_dummy_pipeline(message):
-    for dummy_output in (ConsoleOutput, CheckOutput):
+    available_outputs = (
+        ConsoleOutput,
+        CheckOutput,
+        RetryOutput,
+        NeverDeliveredOutput,
+    )
+
+    for dummy_output in available_outputs:
         yield send(dummy_output())

@@ -20,22 +20,22 @@ class FlowException(MessagingException):
     pass
 
 
-# class Retry(FlowException):
+class Retry(FlowException):
 
-#     """Retry exception.
+    """Retry exception.
 
-#     Expected to be raised by output backend in case if message can't be
-#     delivered at the moment. May contain optional delay in case the backend
-#     know next try time and the reason to help in debug.
+    Expected to be raised by output backend in case if message can't be
+    delivered at the moment. May contain optional delay in case the backend
+    know next try time and the reason to help in debug.
 
-#     :param delay: Amount of time to wait before next try.
-#     :param reason: Human-readable definition of retry reason for logs.
-#     """
+    :param delay: Amount of time to wait before next try.
+    :param reason: Human-readable definition of retry reason for logs.
+    """
 
-#     def __init__(self, reason, delay=None):
-#         super().__init__(reason)
-#         self.delay = delay
-#         self.reason = reason
+    def __init__(self, reason, delay=None):
+        super().__init__(reason)
+        self.delay = delay
+        self.reason = reason
 
 
 class CheckDelivery(FlowException):

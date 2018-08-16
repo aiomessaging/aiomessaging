@@ -40,10 +40,13 @@ class AbstractOutputBackend(ABC, Serializable):
         assert self.name, "The name must be defined on output backend"
 
     @abstractmethod
-    def send(self, message: Message):
+    def send(self, message: Message, retry=0):
         """Send message through this backend.
 
         Must be implemented for every backend.
+
+        :param Message message: message to send
+        :param int retry: retry number (0 by default)
         """
         pass  # pragma: no cover
 

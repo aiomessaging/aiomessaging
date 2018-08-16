@@ -8,7 +8,9 @@ jobs:
       install:
         - pip install -e .[dev]
       script: pylint aiomessaging
-    - script: mypy aiomessaging --ignore-missing-imports
+    - install:
+        - pip install -e .[dev]
+      script: mypy aiomessaging --ignore-missing-imports
     - stage: test
       python:
         - "3.6"

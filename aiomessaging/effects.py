@@ -115,9 +115,8 @@ class Effect(NamedSerializable, abc.ABC):
         """Load serialized effect state.
         """
         return data  # pragma: no cover
-    # pylint: enable=no-self-use
 
-    def pretty(self):  # pragma: no cover
+    def pretty(self, state):  # pragma: no cover
         """Pretty print effect.
         """
         return ''

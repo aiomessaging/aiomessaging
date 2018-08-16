@@ -46,5 +46,6 @@ class OutputConsumer(BaseMessageConsumer):
                     "[this is the end for a while]"
                 )
                 message.log.debug("Finish status:\n%s\n", message.pretty())
+        # pylint:disable=broad-except
         except Exception:
             self.log.exception("Exception while routing message")

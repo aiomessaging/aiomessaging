@@ -72,4 +72,3 @@ class EventLoggerAdapter(logging.LoggerAdapter):
         if self.color:
             prefix = colored(prefix, color="blue")
         return ' '.join([prefix, msg]), kwargs
-

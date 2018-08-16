@@ -21,6 +21,16 @@ def gen_id(prefix='', sep='.'):
     return sep.join([prefix, uniq])
 
 
+def short_id(some_id, length=8, right_add=0, sep='..'):
+    """Make short id for logging.
+    """
+    half = int(length / 2)
+    return sep.join([
+        some_id[:half],
+        some_id[-half-right_add:]
+    ])
+
+
 def class_from_string(class_string, base=None):
     """Get class from string.
 

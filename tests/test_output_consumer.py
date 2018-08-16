@@ -43,8 +43,9 @@ async def test_dummy_consumers(backend, caplog):
     async with OutputConsumerContext(backend, 'console', all_dummy_pipeline):
         async with OutputConsumerContext(backend, 'check', all_dummy_pipeline):
             async with OutputConsumerContext(backend, 'retry', all_dummy_pipeline):
-                async with MessageConsumerContext(backend, all_dummy_pipeline) as consumer:
-                    await send_test_message(backend.connection, consumer.queue.name)
-                    await asyncio.sleep(1)
+                    async with OutputConsumerContext(backend, 'never', all_dummy_pipeline):
+                        async with MessageConsumerContext(backend, all_dummy_pipeline) as consumer:
+                            await send_test_message(backend.connection, consumer.queue.name)
+                            await asyncio.sleep(1)
 
     assert log_count(caplog, level='ERROR') == 0

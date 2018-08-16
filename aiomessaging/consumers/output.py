@@ -30,15 +30,22 @@ class OutputConsumer(BaseMessageConsumer):
             d. NeverDelivered - mark backend as failed and send message back
                to output queue (select next backend in next step)
         """
-        self.router.apply_next_effect(message)
-        # TODO: this is actual end of pipeline. we need to reschedule message
-        #       if next route exists.
-        if self.router.next_effect(message):
-            await self.messages_queue.publish(
-                message.to_dict()
-            )
-            message.log.debug("Message rescheduled on message queue with "
-                              "queue_name=%s", self.messages_queue.name)
-        else:
-            message.log.debug("Message has no next effect, delivery complete"
-                              "[this is the end for a while]")
+        try:
+            self.router.apply_next_effect(message)
+
+            if self.router.next_effect(message):
+                await self.messages_queue.publish(
+                    message.serialize()
+                )
+                message.log.debug("Message rescheduled on message queue with "
+                                  "queue_name=%s",
+                                  self.messages_queue.name)
+            else:
+                message.log.info(
+                    "Message has no next effect, delivery complete "
+                    "[this is the end for a while]"
+                )
+                message.log.debug("Finish status:\n%s\n", message.pretty())
+        # pylint:disable=broad-except
+        except Exception:
+            self.log.exception("Exception while routing message")

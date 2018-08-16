@@ -1,10 +1,11 @@
 """Message object.
 """
+import json
 import logging
 from typing import Dict, List, Optional, Any
 
 from .effects import Effect, EffectStatus, load_effect
-from .utils import gen_id
+from .utils import gen_id, short_id
 from .logging import MessageLoggerAdapter
 
 
@@ -96,6 +97,22 @@ class Message:
         else:
             self.route.append(Route(effect, EffectStatus.PENDING, state=state))
 
+    def get_route_retry(self, effect):
+        """Get number of retries for effect.
+        """
+        for route in self.route:
+            if route.effect == effect:
+                return route.retry_count
+        return 0
+
+    def set_route_retry(self, effect, retry_count):
+        """Set number of retries for route.
+        """
+        for route in self.route:
+            if route.effect == effect:
+                route.retry_count = retry_count
+                return
+
     def to_dict(self) -> dict:
         """Serialize message to dict.
         """
@@ -120,6 +137,22 @@ class Message:
 
     load = from_dict
 
+    def pretty(self):
+        """Pretty print message with route.
+        """
+        pretty_routes = '\n'.join([
+            route.pretty() for route in self.route
+        ])
+        lines = [
+            "\t",
+            "id: %s" % short_id(self.id, right_add=2),
+            "type: %s" % self.event_type,
+            "content: %s" % json.dumps(self.meta, indent=4),
+            "route:\n%s" % pretty_routes,
+            "meta: %s" % json.dumps(self.meta, indent=4)
+        ]
+        return '\n\t'.join(lines)
+
     def __repr__(self):
         """Instance representation.
         """
@@ -133,24 +166,32 @@ class Route:
 
     State may be any json-serializable object.
     """
-    __slots__ = ['effect', 'status', 'state']
+    __slots__ = ['effect', 'status', 'state', 'retry_count']
 
     effect: Effect
     status: EffectStatus
     state: Any
+    retry_count: int
 
     def __init__(self,
                  effect: Effect,
                  status: EffectStatus = EffectStatus.PENDING,
-                 state=None) -> None:
+                 state=None,
+                 retry_count=0) -> None:
         self.effect = effect
         self.status = status
         self.state = state
+        self.retry_count = retry_count
 
     def serialize(self):
         """Serialize route.
         """
-        return [self.effect.serialize(), self.status.value, self.effect.serialize_state(self.state)]
+        return [
+            self.effect.serialize(),
+            self.status.value,
+            self.effect.serialize_state(self.state),
+            self.retry_count
+        ]
 
     @classmethod
     def load(cls, data) -> 'Route':
@@ -161,3 +202,16 @@ class Route:
         data[1] = EffectStatus(data[1])
         data[2] = effect.load_state(data[2])
         return cls(*data)
+
+    def pretty(self):
+        """Pretty format row.
+        """
+        title = "\t\t{effect} <{effect_status}>".format(
+            effect=self.effect.__class__.__name__,
+            effect_status=self.status.name
+        )
+        actions = self.effect.pretty(self.state)
+        return '\n\t\t\t'.join([
+            title,
+            actions
+        ])

@@ -4,6 +4,8 @@ import logging
 
 from termcolor import colored
 
+from .utils import short_id
+
 
 class ConsumerLoggerAdapter(logging.LoggerAdapter):
     """Consumer logger adapter
@@ -70,13 +72,3 @@ class EventLoggerAdapter(logging.LoggerAdapter):
         if self.color:
             prefix = colored(prefix, color="blue")
         return ' '.join([prefix, msg]), kwargs
-
-
-def short_id(some_id, length=8, right_add=0, sep='..'):
-    """Make short id for logging.
-    """
-    half = int(length / 2)
-    return sep.join([
-        some_id[:half],
-        some_id[-half-right_add:]
-    ])

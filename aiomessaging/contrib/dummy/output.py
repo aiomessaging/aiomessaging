@@ -8,7 +8,7 @@ import logging
 
 from aiomessaging.message import Message
 from aiomessaging.outputs import AbstractOutputBackend
-from aiomessaging.exceptions import CheckDelivery
+from aiomessaging.exceptions import CheckDelivery, Retry
 
 
 class NullOutput(AbstractOutputBackend):
@@ -21,7 +21,7 @@ class NullOutput(AbstractOutputBackend):
 
     name = 'null'
 
-    def send(self, message: Message):
+    def send(self, message: Message, retry=0):
         return True
 
 
@@ -33,11 +33,10 @@ class ConsoleOutput(AbstractOutputBackend):
     """
 
     name = 'console'
-    msg_prefix = "Message delivered"
 
-    def send(self, message: Message):
-        formatted_message = json.dumps(message.serialize(), indent=4)
-        logging.info("%s:\n%s", self.msg_prefix, formatted_message)
+    def send(self, message: Message, retry=0):
+        message.log.info("Message delivered to ConsoleOutput")
+        message.log.debug("Message:\n%s\n", message.pretty())
         return True
 
 
@@ -51,7 +50,7 @@ class FailingOutput(AbstractOutputBackend):
 
     name = 'failing'
 
-    def send(self, message: Message):
+    def send(self, message: Message, retry=0):
         raise Exception("FailingOutput fail (just test)")
 
 
@@ -64,7 +63,7 @@ class NeverDeliveredOutput(AbstractOutputBackend):
 
     name = 'never'
 
-    def send(self, message: Message):
+    def send(self, message: Message, retry=0):
         return False
 
 
@@ -79,7 +78,7 @@ class CheckOutput(AbstractOutputBackend):
 
     name = 'check'
 
-    def send(self, message: Message):
+    def send(self, message: Message, retry=0):
         """Always send to delivery check.
         """
         raise CheckDelivery()
@@ -88,3 +87,20 @@ class CheckOutput(AbstractOutputBackend):
         """Check is always successful.
         """
         return True
+
+
+class RetryOutput(AbstractOutputBackend):
+
+    """Retry sending until requested number of retries achieved.
+
+    :param in retries: Number of retries to achieve.
+    """
+
+    name = 'retry'
+
+    def send(self, message: Message, retry=0):
+        """Send message with retry.
+        """
+        expected_retries = self.kwargs.get('retries', 1)
+        if retry < expected_retries:
+            raise Retry("Test retry")

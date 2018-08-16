@@ -24,8 +24,11 @@ class Action(abc.ABC):
         """
         pass  # pragma: no cover
 
-    def execute(self, message):
+    def execute(self, message, retry=0):
         """Execute action.
+
+        :param Message message: message to execute action over.
+        :param int retry: retry number from effect
         """
         pass  # pragma: no cover
 
@@ -41,8 +44,8 @@ class SendOutputAction(Action):
     def get_output(self):
         return self.output
 
-    def execute(self, message):
-        return self.output.send(message)
+    def execute(self, message, retry=0):
+        return self.output.send(message, retry)
 
 
 class CheckOutputAction(Action):
@@ -58,7 +61,7 @@ class CheckOutputAction(Action):
     def get_output(self):
         return self.output
 
-    def execute(self, message):
+    def execute(self, message, retry=0):
         return self.output.check(message)
 
 

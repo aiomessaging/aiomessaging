@@ -6,6 +6,7 @@ import abc
 import enum
 import logging
 
+from itertools import zip_longest
 from typing import Dict, Optional
 
 from .actions import Action, SendOutputAction, CheckOutputAction
@@ -63,6 +64,7 @@ class OutputStatus(enum.Enum):
     CHECK = 2
     SUCCESS = 3
     FAIL = 4
+    RETRY = 5
 
 
 class Effect(NamedSerializable, abc.ABC):
@@ -115,6 +117,11 @@ class Effect(NamedSerializable, abc.ABC):
         return data  # pragma: no cover
     # pylint: enable=no-self-use
 
+    def pretty(self):  # pragma: no cover
+        """Pretty print effect.
+        """
+        return ''
+
     def __eq__(self, other):
         if not isinstance(other, self.__class__):  # pragma: no cover
             raise TypeError("Effect and %s can't be compared" % type(other))
@@ -148,9 +155,10 @@ class SendEffect(Effect):
     def next_action_pos(self, state):
         """Next effect action position.
         """
-        state = self.reset_state(state)
+        state = self.reset_state(state, reset_pending=True)
 
         selected_output = None
+
         # search next pending backend
         for i, (_, status) in enumerate(zip(self.args, state)):
             if status == OutputStatus.PENDING:
@@ -163,8 +171,14 @@ class SendEffect(Effect):
                     break
         return selected_output
 
-    def reset_state(self, state):
+    def reset_state(self, state, reset_pending=False):
         """Reset state.
+
+        `reset_pending=True` force reset all RETRY to PENDING.
+
+        TODO: also reset CHECK to CHECK_PENDING
+
+        :params bool reset_pending: reset to reset_pending
         """
         if state is None or state == []:
             # create default state with all backends pending
@@ -172,6 +186,10 @@ class SendEffect(Effect):
 
         assert len(state) == len(self.args), "State and args length must match"
 
+        if reset_pending and OutputStatus.PENDING not in state:
+            for i, status in enumerate(state):
+                if status == OutputStatus.RETRY:
+                    state[i] = OutputStatus.PENDING
         return state
 
     def apply(self, message):
@@ -185,7 +203,6 @@ class SendEffect(Effect):
         position = self.next_action_pos(state)
         action = self.next_action(state)
         retry = message.get_route_retry(self)
-
         try:
             result = action.execute(message, retry)
 
@@ -198,6 +215,7 @@ class SendEffect(Effect):
         except Retry:
             prev = message.get_route_retry(self)
             message.set_route_retry(self, prev + 1)
+            state[position] = OutputStatus.RETRY
             message.log.info("Delivery retried (%i)", prev + 1)
 
         return state
@@ -218,6 +236,18 @@ class SendEffect(Effect):
     @classmethod
     def load_args(cls, args):
         return [get_class_instance(*b) for b in args]
+
+    def pretty(self, state):
+        """Pretty format effect.
+        """
+        action_format = "{a.__class__.__name__} <{s}>"
+        if not state:
+            state = self.reset_state(state)
+        return '\n\t\t\t'.join([
+            action_format.format(a=a, s=s) for a, s in zip_longest(
+                self.args, state
+            )
+        ])
 
 
 # @register_effect

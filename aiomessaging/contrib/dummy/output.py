@@ -33,11 +33,10 @@ class ConsoleOutput(AbstractOutputBackend):
     """
 
     name = 'console'
-    msg_prefix = "Message delivered"
 
     def send(self, message: Message, retry=0):
-        formatted_message = json.dumps(message.serialize(), indent=4)
-        logging.info("%s:\n%s", self.msg_prefix, formatted_message)
+        message.log.info("Message delivered to ConsoleOutput")
+        message.log.debug("Message:\n%s\n", message.pretty())
         return True
 
 

@@ -110,13 +110,18 @@ class Config(BaseConfig):
             },
             "loggers": {
                 "aiomessaging": {
-                    "level": "DEBUG",
+                    "level": "INFO",
                     "handlers": ["console"],
                     "propagate": False
                 },
+                "aiomessaging.message": {
+                    "level": "DEBUG",
+                    "handlers": ["console"],
+                    "propagate": False
+                }
             },
             "root": {
-                "level": "DEBUG",
+                "level": "INFO",
                 "handlers": ["console"]
             },
         }

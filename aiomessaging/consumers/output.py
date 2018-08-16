@@ -35,12 +35,16 @@ class OutputConsumer(BaseMessageConsumer):
 
             if self.router.next_effect(message):
                 await self.messages_queue.publish(
-                    message.to_dict()
+                    message.serialize()
                 )
                 message.log.debug("Message rescheduled on message queue with "
-                                "queue_name=%s", self.messages_queue.name)
+                                  "queue_name=%s",
+                                  self.messages_queue.name)
             else:
-                message.log.debug("Message has no next effect, delivery complete"
-                                "[this is the end for a while]")
+                message.log.info(
+                    "Message has no next effect, delivery complete "
+                    "[this is the end for a while]"
+                )
+                message.log.debug("Finish status:\n%s\n", message.pretty())
         except Exception:
             self.log.exception("Exception while routing message")

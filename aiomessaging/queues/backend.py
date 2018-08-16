@@ -218,7 +218,6 @@ class QueueBackend:
             raise Exception("You must provide event_type or name")
         if name is None:
             name = gen_id(f"gen.{event_type}")
-        self.log.info('Generation queue %s, %s', name, event_type)
         return await self.get_queue(
             name=name, exchange='', exchange_type=self.TYPE_DIRECT,
             routing_key=name, auto_delete=True

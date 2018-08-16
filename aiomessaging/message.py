@@ -1,10 +1,11 @@
 """Message object.
 """
+import json
 import logging
 from typing import Dict, List, Optional, Any
 
 from .effects import Effect, EffectStatus, load_effect
-from .utils import gen_id
+from .utils import gen_id, short_id
 from .logging import MessageLoggerAdapter
 
 
@@ -136,6 +137,22 @@ class Message:
 
     load = from_dict
 
+    def pretty(self):
+        """Pretty print message with route.
+        """
+        pretty_routes = '\n'.join([
+            route.pretty() for route in self.route
+        ])
+        lines = [
+            "\t",
+            "id: %s" % short_id(self.id, right_add=2),
+            "type: %s" % self.event_type,
+            "content: %s" % json.dumps(self.meta, indent=4),
+            "route:\n%s" % pretty_routes,
+            "meta: %s" % json.dumps(self.meta, indent=4)
+        ]
+        return '\n\t'.join(lines)
+
     def __repr__(self):
         """Instance representation.
         """
@@ -185,3 +202,16 @@ class Route:
         data[1] = EffectStatus(data[1])
         data[2] = effect.load_state(data[2])
         return cls(*data)
+
+    def pretty(self):
+        """Pretty format row.
+        """
+        title = "\t\t{effect} <{effect_status}>".format(
+            effect=self.effect.__class__.__name__,
+            effect_status=self.status.name
+        )
+        actions = self.effect.pretty(self.state)
+        return '\n\t\t\t'.join([
+            title,
+            actions
+        ])

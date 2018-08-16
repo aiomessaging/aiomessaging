@@ -7,10 +7,6 @@ services:
 install:
   - pip install -e .[dev]
   - pip install codecov
-script:
-  - pytest --cov-report=term-missing --cov aiomessaging
-  - mypy aiomessaging --ignore-missing-imports
-  - pylint aiomessaging
 after_success:
   - codecov
 jobs:

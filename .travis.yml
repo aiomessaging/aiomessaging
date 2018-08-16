@@ -1,7 +1,4 @@
 language: python
-python:
-  - "3.6"
-  - "3.7-dev"
 services:
   - rabbitmq
 jobs:
@@ -10,10 +7,12 @@ jobs:
       python: "3.7-dev"
       install:
         - pip install -e .[dev]
-      script:
-        - pylint aiomessaging
-        - mypy aiomessaging --ignore-missing-imports
+      script: pylint aiomessaging
+    - script: mypy aiomessaging --ignore-missing-imports
     - stage: test
+      python:
+        - "3.6"
+        - "3.7-dev"
       install:
         - pip install -e .[dev]
         - pip install codecov

@@ -198,6 +198,7 @@ class SendEffect(Effect):
         except Retry:
             prev = message.get_route_retry(self)
             message.set_route_retry(self, prev + 1)
+            message.log.info("Delivery retried (%i)", prev + 1)
 
         return state
 

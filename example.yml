@@ -11,13 +11,11 @@ kvstore:
 events:
   example_event:
     event_pipeline:
-      - tests.tmp.ExampleFilter
-      - tests.tmp.ExampleFilter:
+      - aiomessaging.contrib.dummy.NoopFilter
+      - aiomessaging.contrib.dummy.NoopFilter:
         example_kwarg: 1
     generators:
-      - tests.tmp.OneMessage
+      - aiomessaging.contrib.dummy.DummyGenerator
     message_pipeline:
-      - tests.tmp.ExampleFilter
-    output:
-      - aiomessaging.contrib.dummy.NullOutput
-      - aiomessaging.contrib.dummy.ConsoleOutput
+      - aiomessaging.contrib.dummy.NoopFilter
+    output:  aiomessaging.contrib.dummy.pipelines.example_pipeline

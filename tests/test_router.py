@@ -6,8 +6,10 @@ from aiomessaging.message import Message, Route
 from aiomessaging.effects import SendEffect, EffectStatus
 from aiomessaging.actions import SendOutputAction
 from aiomessaging.contrib.dummy import NullOutput
-
-from .tmp import simple_pipeline, sequence_pipeline
+from aiomessaging.contrib.dummy.pipelines import (
+    simple_pipeline,
+    sequence_pipeline,
+)
 
 
 def test_simple_pipeline():
@@ -54,7 +56,9 @@ def test_string_configuration():
     """Test string output pipeline configuration allowed.
     """
     message = Message(event_id='test_sequence', event_type='example_event')
-    router = Router(output_pipeline='tests.tmp.simple_pipeline')
+    router = Router(
+        output_pipeline='aiomessaging.contrib.dummy.pipelines.simple_pipeline'
+    )
     router.get_pipeline(message)
 
 
@@ -82,7 +86,7 @@ def test_string_list_init():
     """Test pipeline initialization from string (class) list.
     """
     message = Message(event_id='test_sequence', event_type='example_event')
-    router = Router(['tests.tmp.NullOutput'])
+    router = Router(['aiomessaging.contrib.dummy.NullOutput'])
     pipeline = router.get_pipeline(message)
     effect = pipeline.send(None)
     action = effect.next_action()

@@ -1,7 +1,7 @@
 """
 contrib.dummy module
 
-Contains no-op outputs and generators for testing proposes.
+Contains no-op messaging components for testing proposes.
 """
 from .output import (
     NullOutput,
@@ -11,6 +11,9 @@ from .output import (
     NeverDeliveredOutput,
     RetryOutput,
 )
+from .generators import DummyGenerator
+from .filters import NoopFilter
+
 
 __all__ = [
     'NullOutput',
@@ -19,4 +22,8 @@ __all__ = [
     'CheckOutput',
     'NeverDeliveredOutput',
     'RetryOutput',
+
+    'DummyGenerator',
+
+    'NoopFilter',
 ]

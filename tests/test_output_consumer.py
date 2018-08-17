@@ -4,6 +4,12 @@ Output consumer test suite.
 import asyncio
 import pytest
 
+from aiomessaging.contrib.dummy.pipelines import (
+    sequence_pipeline,
+    failing_output_pipeline,
+    all_dummy_pipeline,
+)
+
 # pylint:disable=unused-import
 from .fixtures import backend  # noqa
 
@@ -12,11 +18,6 @@ from .helpers import (
     MessageConsumerContext,
     send_test_message,
     log_count,
-)
-from .tmp import (
-    sequence_pipeline,
-    failing_output_pipeline,
-    all_dummy_pipeline,
 )
 
 

@@ -8,8 +8,9 @@ from aiomessaging.consumers import MessageConsumer
 from aiomessaging.message import Message
 from aiomessaging.queues import QueueBackend
 from aiomessaging.router import Router
-from aiomessaging.contrib.dummy import NullOutput
 from aiomessaging.effects import send
+from aiomessaging.contrib.dummy import NullOutput
+from aiomessaging.contrib.dummy.pipelines import example_pipeline
 
 from .helpers import has_log_message
 
@@ -40,9 +41,3 @@ async def test_simple(event_loop, caplog):
     await backend.close()
 
     assert not has_log_message(caplog, level='ERROR')
-
-
-def example_pipeline(message):
-    """Example output pipeline.
-    """
-    yield send(NullOutput())

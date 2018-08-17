@@ -2,6 +2,7 @@ import asyncio
 import pytest
 
 from aiomessaging.app import AiomessagingApp
+from .helpers import send_test_message
 
 
 def test_sync(event_loop, app):
@@ -20,8 +21,9 @@ async def test_listen_generation(event_loop, app):
     app.set_event_loop(event_loop)
     await app._start()
 
-    queue = await app.queue.generation_queue('test_listen_generation')
-    await app.cluster.generation_queue.put(queue.name)
+    queue = await app.queue.events_queue('example_event')
+    await send_test_message(app.queue.connection, queue.name)
+    await asyncio.sleep(1)
 
     await app.shutdown()
 

@@ -61,11 +61,17 @@ class QueueBackend:
 
     # pylint: disable=no-self-use
     def get_url(self):
-        """Connection string.
+        """Get connection string.
         """
-        # TODO: use parameters from instance
-        return ('amqp://guest:guest@localhost:5672/?connection_attempts=10'
-                '&retry_delay=2')
+        vhost = self.virtual_host.lstrip('/')
+        return ('amqp://{username}:{password}@{host}:{port}/{vhost}'
+                '?connection_attempts=10&retry_delay=2').format(
+                    username=self.username,
+                    password=self.password,
+                    host=self.host,
+                    port=self.port,
+                    vhost=vhost
+                )
 
     def connect(self, loop=None):
         """Establish connection to queue backend.

@@ -5,7 +5,7 @@ app:
 # queue backend configuration
 queue:
   backend: rabbitmq
-  virtual_host:  aiomessaging
+  virtual_host: /
 # key-value storage configuration
 kvstore:
   backend: dummy

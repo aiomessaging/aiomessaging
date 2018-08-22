@@ -1,7 +1,6 @@
 """
 tests helpers
 """
-import json
 import logging
 
 from aiomessaging.queues import QueueBackend

@@ -8,8 +8,6 @@ from aiomessaging.consumers import MessageConsumer
 from aiomessaging.message import Message
 from aiomessaging.queues import QueueBackend
 from aiomessaging.router import Router
-from aiomessaging.effects import send
-from aiomessaging.contrib.dummy import NullOutput
 from aiomessaging.contrib.dummy.pipelines import example_pipeline
 
 from .helpers import has_log_message, log_count

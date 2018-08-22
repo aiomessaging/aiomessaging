@@ -106,7 +106,7 @@ class AiomessagingApp:
 
         TODO: rename
 
-        Creates consumer for generated messages when cluster event recieved.
+        Creates consumer for generated messages when cluster event received.
         """
         self.log.debug("Listen clusters generation queue")
 

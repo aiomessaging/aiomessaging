@@ -70,5 +70,5 @@ async def test_output_not_available(event_loop, caplog):
     await consumer.stop()
     await backend.close()
 
-    # OutputNotAvailable exception must be logged
-    assert log_count(caplog, level='ERROR') == 1
+    # Skip output logs
+    assert log_count(caplog, level='ERROR') == 3

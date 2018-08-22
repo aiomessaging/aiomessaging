@@ -65,6 +65,7 @@ class OutputStatus(enum.Enum):
     SUCCESS = 3
     FAIL = 4
     RETRY = 5
+    SKIP = 6
 
 
 class Effect(NamedSerializable, abc.ABC):
@@ -96,6 +97,11 @@ class Effect(NamedSerializable, abc.ABC):
 
         Return `Action` instance or `None` if no more actions available for
         this effect.
+        """
+        pass  # pragma: no cover
+
+    def skip_next(self, state):
+        """Skip next effect action
         """
         pass  # pragma: no cover
 
@@ -150,6 +156,12 @@ class SendEffect(Effect):
         if state[position] == OutputStatus.CHECK:
             return CheckOutputAction(selected_output)
         return SendOutputAction(selected_output)
+
+    def skip_next(self, state=None):
+        state = self.reset_state(state)
+        position = self.next_action_pos(state)
+        state[position] = OutputStatus.SKIP
+        return state
 
     def next_action_pos(self, state):
         """Next effect action position.

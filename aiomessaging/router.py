@@ -43,6 +43,17 @@ class Router:
         else:
             message.set_route_status(effect, EffectStatus.FINISHED)
 
+    def skip_next_effect(self, message):
+        """Skip next effect action.
+        """
+        effect = self.next_effect(message)
+        new_state = effect.skip_next(state=message.get_route_state(effect))
+        message.set_route_state(effect, new_state)
+        if effect.next_action(message.get_route_state(effect)):
+            message.set_route_status(effect, EffectStatus.PENDING)
+        else:
+            message.set_route_status(effect, EffectStatus.FINISHED)
+
     def get_pipeline(self, message: Message):
         """Get delivery pipeline.
         """

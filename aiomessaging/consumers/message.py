@@ -45,6 +45,13 @@ class MessageConsumer(BaseMessageConsumer):
         try:
             while True:
                 effect = self.router.next_effect(message)
+                if effect is None:
+                    # TODO: implement same logic as message delivered in output
+                    #       consumer
+                    message.log.warning(
+                        "No next effect for message (in message consumer)"
+                    )
+                    break
                 prev_state = message.get_route_state(effect)
                 action = effect.next_action(prev_state)
 
@@ -53,7 +60,13 @@ class MessageConsumer(BaseMessageConsumer):
                     output = action.get_output()
 
                     if output.name not in self.available_outputs:
-                        raise OutputNotAvailable()
+                        self.router.skip_next_effect(message)
+                        message.log.error(
+                            "Output %s skipped because it is not available. "
+                            "Available outputs: %s",
+                            output.name, self.available_outputs
+                        )
+                        continue
 
                     await self.output_queue.publish(
                         message.to_dict(), routing_key=output.name

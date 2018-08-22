@@ -156,7 +156,7 @@ class Config(BaseConfig):
         TODO: we need a way to get this list from config directly or from
               pipeline (problem with generator)
         """
-        return ('null', 'console', 'never', 'retry')
+        return set(self.outputs.keys())
 
     def get_log_format(self):
         """Log format.

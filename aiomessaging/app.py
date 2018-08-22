@@ -160,6 +160,7 @@ class AiomessagingApp:
                 event_type,
                 router=self.get_router(event_type),
                 output_queue=await self.queue.output_queue(event_type),
+                available_outputs=self.config.get_enabled_outputs(event_type),
                 queue=await self.queue.messages_queue(event_type),
                 loop=self.loop
             )

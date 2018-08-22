@@ -7,6 +7,15 @@ from .base import BaseMessageConsumer
 from ..actions import SendOutputAction, CheckOutputAction
 
 
+class OutputNotAvailable(Exception):
+    """Output not available exception.
+
+    Raised if output returned from pipeline is not available (no consumers for
+    such routing key, message will not be delivered).
+    """
+    pass
+
+
 class MessageConsumer(BaseMessageConsumer):
 
     """Message consumer.
@@ -21,11 +30,12 @@ class MessageConsumer(BaseMessageConsumer):
     router: Router
 
     def __init__(self, event_type, router: Router, output_queue,
-                 **kwargs) -> None:
+                 available_outputs, **kwargs) -> None:
         super().__init__(**kwargs)
         self.event_type = event_type
         self.router = router
         self.output_queue = output_queue
+        self.available_outputs = available_outputs
 
     async def handle_message(self, message: Message):
         """Message handler.
@@ -41,6 +51,9 @@ class MessageConsumer(BaseMessageConsumer):
                 if isinstance(action, (SendOutputAction, CheckOutputAction)):
                     # send message to output queue
                     output = action.get_output()
+
+                    if output.name not in self.available_outputs:
+                        raise OutputNotAvailable()
 
                     await self.output_queue.publish(
                         message.to_dict(), routing_key=output.name

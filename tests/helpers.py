@@ -36,11 +36,9 @@ class OutputConsumerContext:
             queue=queue
         )
         await self.output_consumer.start()
-        print("START OUTPUT Consumer!!")
         return self.output_consumer
 
     async def __aexit__(self, exc_type, exc, tb):
-        print("STOP OUTPUT Consumer!!")
         await self.output_consumer.stop()
 
 
@@ -64,14 +62,13 @@ class MessageConsumerContext:
             event_type='example_event',
             router=router,
             output_queue=output_queue,
+            available_outputs=('console', 'check', 'retry', 'never'),
             queue=queue
         )
         await self.message_consumer.start()
-        print("START MessageConsumer!!")
         return self.message_consumer
 
     async def __aexit__(self, exc_type, exc, tb):
-        print("STOP MessageConsumer!!")
         await self.message_consumer.stop()
 
 

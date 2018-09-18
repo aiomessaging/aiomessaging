@@ -72,9 +72,9 @@ class Effect(NamedSerializable, abc.ABC):
 
     """Abstract pipeline effect.
 
-    Effect used in pipeline generator. Pipeline return effects instead of
-    performing heavy operations. Any effect can be serialized, transferred to
-    the place of execution.
+    Effect used in delivery pipeline generator. Pipeline return effects instead
+    of performing heavy operations. Any effect can be serialized and
+    transferred to the place of execution.
 
     The method `next_effect` must be implemented on all derived classes and
     must return an `Action` instance or `None` if no next action available for

@@ -37,7 +37,8 @@ setup(
         'ujson',
         'pika',
         'PyYAML',
-        'termcolor'
+        'termcolor',
+        'click',
     ],
     extras_require={
         'dev': [
@@ -49,5 +50,10 @@ setup(
             'mypy',
             'pylint==2.0.0.dev2'
         ]
-    }
+    },
+    entry_points={
+        'console_scripts': [
+            'aiom=aiomessaging.cli:cli',
+        ],
+    },
 )

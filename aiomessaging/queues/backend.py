@@ -38,7 +38,7 @@ class QueueBackend:
     _channels: Dict[str, pika.channel.Channel]
     _channels_opening: Dict[str, asyncio.Future]
 
-    def __init__(self, host='localhost', port=5672, username='guest',
+    def __init__(self, host='127.0.0.1', port=5672, username='guest',
                  password='guest', virtual_host="/", loop=None,
                  reconnect_timeout=3):
         self.loop = loop

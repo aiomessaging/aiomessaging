@@ -7,7 +7,6 @@ import logging.config
 
 from .config import Config
 from .consumers import ConsumersManager
-from .cluster import Cluster
 from .queues import QueueBackend
 
 
@@ -15,7 +14,6 @@ from .queues import QueueBackend
 class AiomessagingApp:
     """aiomessaging application.
     """
-    cluster: Cluster
     queue: QueueBackend
     config: Config
     generation_queue: asyncio.Queue
@@ -40,7 +38,7 @@ class AiomessagingApp:
 
         self.generation_queue = asyncio.Queue(loop=loop)
 
-        self.consumers = ConsumersManager(self)
+        self.consumers = ConsumersManager(self.config, self.queue, self.generation_queue)
 
     def start(self, loop=None):
         """Start aiomessaging application.
@@ -75,19 +73,7 @@ class AiomessagingApp:
         """
         await self.queue.connect()
 
-        await self.create_cluster()
-        await self.consumers.start_all()
-
-    async def create_cluster(self):
-        """Create Cluster instance and start cluster queue handling.
-        """
-        queue = await self.queue.cluster_queue()
-        self.cluster = Cluster(
-            queue=queue,
-            generation_queue=self.generation_queue,
-            loop=self.loop
-        )
-        await self.cluster.start()
+        await self.consumers.start_all(loop=self.loop)
 
     async def send(self, event_type, payload=None):
         """Publish event to the events queue.
@@ -129,8 +115,6 @@ class AiomessagingApp:
     async def shutdown(self):
         """Shutdown application gracefully.
         """
-        await self.cluster.stop()
-
         await self.consumers.stop_all()
 
         await self.queue.close()

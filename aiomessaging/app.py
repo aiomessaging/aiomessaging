@@ -8,7 +8,6 @@ import logging.config
 from .config import Config
 from .consumers import ConsumersManager
 from .cluster import Cluster
-from .router import Router
 from .queues import QueueBackend
 
 
@@ -100,12 +99,6 @@ class AiomessagingApp:
         # because we publish to '' exchange by default
         routing_key = "events.%s" % event_type
         await queue.publish(payload, routing_key=routing_key)
-
-    def get_router(self, event_type) -> Router:
-        """Get router instance for event type.
-        """
-        router_config = self.config.events.get(event_type)['output']
-        return Router(router_config)
 
     def configure_logging(self):
         """Configure logging.

@@ -5,6 +5,8 @@ import asyncio
 from typing import Dict
 from collections import defaultdict
 
+from ..router import Router
+
 from .event import EventConsumer
 from .message import MessageConsumer
 from .output import OutputConsumer
@@ -90,7 +92,7 @@ class ConsumersManager:
 
             self.message_consumers[event_type] = MessageConsumer(
                 event_type,
-                router=self.app.get_router(event_type),
+                router=self.get_router(event_type),
                 output_queue=await self.queue.output_queue(event_type),
                 available_outputs=self.config.get_enabled_outputs(event_type),
                 queue=await self.queue.messages_queue(event_type),
@@ -108,7 +110,7 @@ class ConsumersManager:
                     event_type
                 )
                 self.output_consumers[output][event_type] = OutputConsumer(
-                    router=self.app.get_router(event_type),
+                    router=self.get_router(event_type),
                     event_type=event_type,
                     messages_queue=messages_queue,
                     queue=queue,
@@ -125,11 +127,9 @@ class ConsumersManager:
         """
         self.log.debug("Listen clusters generation queue")
 
-        messages_queue = await self.queue.messages_queue(
-            'example_event'
-        )
         self.generation_consumer = GenerationConsumer(
-            messages_queue=messages_queue, loop=self.loop
+            messages_queue=await self.queue.messages_queue('example_event'),
+            loop=self.loop
         )
         await self.generation_consumer.start()
 
@@ -152,6 +152,12 @@ class ConsumersManager:
         FIXME
         """
         return ['example_event']
+
+    def get_router(self, event_type) -> Router:
+        """Get router instance for event type.
+        """
+        router_config = self.config.events.get(event_type)['output']
+        return Router(router_config)
 
 
 async def stop_all(consumers):

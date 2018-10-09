@@ -28,9 +28,14 @@ class ConsumersManager:
     def __init__(self, app):
         self.app = app
 
+        # TODO: move to constructor arguments
         self.config = app.config
         self.queue = app.queue
-        self.generation_queue = self.app.generation_queue
+        self.generation_queue = app.generation_queue
+        self.loop = app.loop
+
+        # TODO: replace with different logger
+        self.log = app.log
 
         self.event_consumers = {}
         self.message_consumers = {}
@@ -43,7 +48,7 @@ class ConsumersManager:
         await self.create_message_consumers()
         await self.create_output_consumers()
 
-        self.generation_listener = self.app.loop.create_task(
+        self.generation_listener = self.loop.create_task(
             self.listen_generation()
         )
 
@@ -72,7 +77,7 @@ class ConsumersManager:
                 queue=await self.queue.events_queue(event_type),
                 # TODO: replace with tmp queue factory?
                 queue_service=self.queue,
-                loop=self.app.loop,
+                loop=self.loop,
             )
             await self.event_consumers[event_type].start()
 
@@ -81,7 +86,7 @@ class ConsumersManager:
         """
 
         for event_type in self.event_types():
-            self.app.log.debug("Create MessageConsumer for type %s", event_type)
+            self.log.debug("Create MessageConsumer for type %s", event_type)
 
             self.message_consumers[event_type] = MessageConsumer(
                 event_type,
@@ -89,7 +94,7 @@ class ConsumersManager:
                 output_queue=await self.queue.output_queue(event_type),
                 available_outputs=self.config.get_enabled_outputs(event_type),
                 queue=await self.queue.messages_queue(event_type),
-                loop=self.app.loop
+                loop=self.loop
             )
             await self.message_consumers[event_type].start()
 
@@ -107,7 +112,7 @@ class ConsumersManager:
                     event_type=event_type,
                     messages_queue=messages_queue,
                     queue=queue,
-                    loop=self.app.loop
+                    loop=self.loop
                 )
                 await self.output_consumers[output][event_type].start()
 
@@ -118,19 +123,19 @@ class ConsumersManager:
 
         Creates consumer for generated messages when cluster event received.
         """
-        self.app.log.debug("Listen clusters generation queue")
+        self.log.debug("Listen clusters generation queue")
 
         messages_queue = await self.queue.messages_queue(
             'example_event'
         )
         self.generation_consumer = GenerationConsumer(
-            messages_queue=messages_queue, loop=self.app.loop
+            messages_queue=messages_queue, loop=self.loop
         )
         await self.generation_consumer.start()
 
         while True:
             queue_name = await self.generation_queue.get()
-            self.app.log.debug('Message in generation_queue %s', queue_name)
+            self.log.debug('Message in generation_queue %s', queue_name)
             queue = await self.queue.generation_queue(name=queue_name)
             self.generation_consumer.consume(queue)
 

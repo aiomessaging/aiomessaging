@@ -4,11 +4,9 @@ import os
 import asyncio
 import logging
 import logging.config
-from collections import defaultdict
 
 from .config import Config
 from .consumers import ConsumersManager
-from .consumers import GenerationConsumer
 from .cluster import Cluster
 from .router import Router
 from .queues import QueueBackend
@@ -21,9 +19,6 @@ class AiomessagingApp:
     cluster: Cluster
     queue: QueueBackend
     config: Config
-
-    generation_consumer: GenerationConsumer
-    generation_listener = None
 
     consumers: ConsumersManager
 
@@ -93,39 +88,6 @@ class AiomessagingApp:
         self.cluster = Cluster(queue=queue, loop=self.loop)
         await self.cluster.start()
 
-        self.generation_listener = self.loop.create_task(
-            self.listen_generation()
-        )
-
-    async def listen_generation(self):
-        """Listen generation queue of cluster for queue names to consume.
-
-        TODO: rename
-
-        Creates consumer for generated messages when cluster event received.
-        """
-        self.log.debug("Listen clusters generation queue")
-
-        messages_queue = await self.queue.messages_queue(
-            'example_event'
-        )
-        self.generation_consumer = GenerationConsumer(
-            messages_queue=messages_queue, loop=self.loop
-        )
-        await self.generation_consumer.start()
-
-        while True:
-            queue_name = await self.cluster.generation_queue.get()
-            self.log.debug('Message in generation_queue %s', queue_name)
-            queue = await self.queue.generation_queue(name=queue_name)
-            self.generation_consumer.consume(queue)
-
-    async def stop_listen_generation(self):
-        """Stop listen for generation queues.
-        """
-        await self.generation_consumer.stop()
-        self.generation_listener.cancel()
-
     async def send(self, event_type, payload=None):
         """Publish event to the events queue.
         """
@@ -172,7 +134,6 @@ class AiomessagingApp:
     async def shutdown(self):
         """Shutdown application gracefully.
         """
-        await self.stop_listen_generation()
         await self.cluster.stop()
 
         await self.consumers.stop_all()

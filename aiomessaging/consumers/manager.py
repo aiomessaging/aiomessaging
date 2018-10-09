@@ -1,6 +1,7 @@
 """
 Consumers manager.
 """
+import asyncio
 from typing import Dict
 from collections import defaultdict
 
@@ -14,14 +15,15 @@ class ConsumersManager:
 
     """Consumers manager.
 
-    Container for all application consumers.
+    Container for all application consumers except cluster.
     """
+
     event_consumers: Dict
     message_consumers: Dict
     output_consumers: Dict
 
     generation_consumer: GenerationConsumer
-    generation_listener = None
+    generation_listener: asyncio.Task
 
     def __init__(self, app):
         self.app = app

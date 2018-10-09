@@ -18,11 +18,12 @@ def test_sync(event_loop, app):
 
 @pytest.mark.asyncio
 async def test_listen_generation(event_loop, app):
+    await app.send('example_event', {})
+
     app.set_event_loop(event_loop)
     await app._start()
 
-    queue = await app.queue.events_queue('example_event')
-    await send_test_message(app.queue.connection, queue.name)
+    await app.send('example_event', {})
     await asyncio.sleep(1)
 
     await app.shutdown()

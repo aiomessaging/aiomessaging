@@ -79,7 +79,7 @@ class Queue(AbstractQueue):
     Pass empty string to `name` if you want a random name.
 
     Queue handle reconnects by itself obtaining new channel from backend if
-    current one was closed. (TODO)
+    current one was closed.
     """
 
     _consume_handler = None
@@ -87,7 +87,7 @@ class Queue(AbstractQueue):
     _channel: pika.channel.Channel
     _normal_close = False
 
-    def __init__(self, backend, name=None, exchange=None, exchange_type=None,
+    def __init__(self, backend, name=None, exchange='', exchange_type='direct',
                  routing_key=None, auto_delete=True, durable=False):
         self._name = name
         super().__init__()
@@ -220,7 +220,6 @@ class Queue(AbstractQueue):
         future = self._backend._create_future()
 
         def on_queue_declare(method_frame):
-            # TODO: there is a race condition (check)
             self._name = method_frame.method.queue
             future.set_result(method_frame)
             self.log.debug('Declared ok')
@@ -277,7 +276,6 @@ class Queue(AbstractQueue):
 
     def reconnect(self):
         """
-        TODO: handle disconnects?
         TODO: refactoring
         """
         self.log.info("Reconnecting %s", self.name)

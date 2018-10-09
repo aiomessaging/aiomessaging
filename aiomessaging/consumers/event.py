@@ -27,7 +27,7 @@ class EventConsumer(SingleQueueConsumer):
 
     async def handler(self, message):
         event = Event('example_event', payload=message)
-        event.log.info("Event in event consumer")
+        event.log.info("Event received")
         try:
             await self.handle_event(event)
         # except DropException:

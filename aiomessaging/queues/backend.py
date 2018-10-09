@@ -1,6 +1,7 @@
 """Messaging queue backend.
 """
 import logging
+import warnings
 import asyncio
 
 from typing import Dict
@@ -97,7 +98,7 @@ class QueueBackend:
     def is_open(self):
         """Connection opened flag.
         """
-        return self.connection.is_open
+        return self.connection and self.connection.is_open
 
     async def channel(self, name='default'):
         """Get new channel for connection (coroutine).
@@ -123,7 +124,7 @@ class QueueBackend:
             """On channel closed handler.
             """
             channel.add_on_close_callback(self.on_channel_closed)
-            channel.basic_qos(prefetch_count=20)
+            channel.basic_qos(prefetch_count=100)
             self._channels[name] = channel
             try:
                 self._channels_opening[name].set_result(channel)
@@ -139,6 +140,8 @@ class QueueBackend:
 
         DEPRECATED
         """
+        warnings.warn("QueueBackend.publish is deprecated and will be removed"
+                      " in future versions")
         channel = await self.channel()
         properties = pika.BasicProperties(app_id='example-publisher',
                                           content_type='application/json')

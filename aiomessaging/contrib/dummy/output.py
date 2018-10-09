@@ -35,7 +35,7 @@ class ConsoleOutput(AbstractOutputBackend):
     name = 'console'
 
     def send(self, message: Message, retry=0):
-        message.log.info("Message delivered to ConsoleOutput")
+        message.log.debug("Message delivered to ConsoleOutput")
         message.log.debug("Message:\n%s\n", message.pretty())
         return True
 

@@ -182,6 +182,17 @@ class AiomessagingApp:
                 )
                 await self.output_consumers[output][event_type].start()
 
+    async def send(self, event_type, payload=None):
+        """Publish event to the events queue.
+        """
+        if not self.queue.is_open:
+            await self.queue.connect()
+
+        queue = await self.queue.events_queue(event_type)
+        # because we publish to '' exchange by default
+        routing_key = "events.%s" % event_type
+        await queue.publish(payload, routing_key=routing_key)
+
     def get_router(self, event_type) -> Router:
         """Get router instance for event type.
         """

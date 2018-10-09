@@ -34,7 +34,6 @@ class ConsumersManager:
         self.config = app.config
         self.queue = app.queue
         self.generation_queue = app.generation_queue
-        self.loop = app.loop
 
         # TODO: replace with different logger
         self.log = app.log
@@ -42,6 +41,10 @@ class ConsumersManager:
         self.event_consumers = {}
         self.message_consumers = {}
         self.output_consumers = defaultdict(dict)
+
+    @property
+    def loop(self):
+        return self.app.loop
 
     async def start_all(self):
         """Start all common consumers.

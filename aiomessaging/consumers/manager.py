@@ -17,6 +17,7 @@ from .output import OutputConsumer
 from .generation import GenerationConsumer
 
 
+# pylint: disable=too-many-instance-attributes
 class ConsumersManager:
 
     """Consumers manager.
@@ -28,6 +29,7 @@ class ConsumersManager:
     queue: AbstractQueue
     generation_queue: asyncio.Queue
     loop: asyncio.AbstractEventLoop
+    cluster: Cluster
 
     event_consumers: Dict[str, EventConsumer]
     message_consumers: Dict[str, MessageConsumer]

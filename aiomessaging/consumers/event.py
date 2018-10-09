@@ -10,7 +10,7 @@ class EventConsumer(SingleQueueConsumer):
 
     """Event consumer.
 
-    Receive messages from inbound queue, pass it though event pipeline,
+    Receive messages from inbound queue, pass it though event pipeline and
     generate messages using generation pipeline.
     """
 

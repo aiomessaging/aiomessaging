@@ -26,7 +26,6 @@ class AiomessagingApp:
 
     def __init__(self, config=None, loop=None):
         self.loop = loop
-        self.consumers = ConsumersManager(self)
 
         self.set_event_loop(loop)
 
@@ -39,11 +38,7 @@ class AiomessagingApp:
 
         self.queue = self.config.get_queue_backend()
 
-    # pylint: disable=no-self-use
-    def event_types(self):
-        """Get event types served by this instance.
-        """
-        return ['example_event']
+        self.consumers = ConsumersManager(self)
 
     def start(self, loop=None):
         """Start aiomessaging application.

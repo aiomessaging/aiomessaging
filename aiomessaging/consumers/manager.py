@@ -18,15 +18,18 @@ class ConsumersManager:
     Container for all application consumers except cluster.
     """
 
-    event_consumers: Dict
-    message_consumers: Dict
-    output_consumers: Dict
+    event_consumers: Dict[str, EventConsumer]
+    message_consumers: Dict[str, MessageConsumer]
+    output_consumers: Dict[str, Dict]
 
     generation_consumer: GenerationConsumer
     generation_listener: asyncio.Task
 
     def __init__(self, app):
         self.app = app
+
+        self.config = app.config
+        self.queue = app.queue
 
         self.event_consumers = {}
         self.message_consumers = {}
@@ -54,20 +57,20 @@ class ConsumersManager:
             await stop_all(group)
 
     async def create_event_consumers(self):
-        """Create consumers for each event type.
+        """Create event consumers for each event type.
         """
-        for event_type in self.app.event_types():
-            event_pipeline = self.app.config.get_event_pipeline(event_type)
-            generators = self.app.config.get_generators(event_type)
+        for event_type in self.event_types():
+            event_pipeline = self.config.get_event_pipeline(event_type)
+            generators = self.config.get_generators(event_type)
 
             self.event_consumers[event_type] = EventConsumer(
                 event_type=event_type,
                 event_pipeline=event_pipeline,
                 generators=generators,
-                cluster=self.app.cluster,
-                queue=await self.app.queue.events_queue(event_type),
+                cluster=self.app.cluster, # TODO: replace with queue of queues to consume
+                queue=await self.queue.events_queue(event_type),
                 # TODO: replace with tmp queue factory?
-                queue_service=self.app.queue,
+                queue_service=self.queue,
                 loop=self.app.loop,
             )
             await self.event_consumers[event_type].start()
@@ -76,15 +79,15 @@ class ConsumersManager:
         """Create message consumers.
         """
 
-        for event_type in self.app.event_types():
+        for event_type in self.event_types():
             self.app.log.debug("Create MessageConsumer for type %s", event_type)
 
             self.message_consumers[event_type] = MessageConsumer(
                 event_type,
                 router=self.app.get_router(event_type),
-                output_queue=await self.app.queue.output_queue(event_type),
-                available_outputs=self.app.config.get_enabled_outputs(event_type),
-                queue=await self.app.queue.messages_queue(event_type),
+                output_queue=await self.queue.output_queue(event_type),
+                available_outputs=self.config.get_enabled_outputs(event_type),
+                queue=await self.queue.messages_queue(event_type),
                 loop=self.app.loop
             )
             await self.message_consumers[event_type].start()
@@ -92,10 +95,10 @@ class ConsumersManager:
     async def create_output_consumers(self):
         """Create output consumers.
         """
-        for event_type in self.app.event_types():
-            for output in self.app.config.get_enabled_outputs(event_type):
-                queue = await self.app.queue.output_queue(event_type, output)
-                messages_queue = await self.app.queue.messages_queue(
+        for event_type in self.event_types():
+            for output in self.config.get_enabled_outputs(event_type):
+                queue = await self.queue.output_queue(event_type, output)
+                messages_queue = await self.queue.messages_queue(
                     event_type
                 )
                 self.output_consumers[output][event_type] = OutputConsumer(
@@ -116,7 +119,7 @@ class ConsumersManager:
         """
         self.app.log.debug("Listen clusters generation queue")
 
-        messages_queue = await self.app.queue.messages_queue(
+        messages_queue = await self.queue.messages_queue(
             'example_event'
         )
         self.generation_consumer = GenerationConsumer(
@@ -125,9 +128,9 @@ class ConsumersManager:
         await self.generation_consumer.start()
 
         while True:
-            queue_name = await self.app.cluster.generation_queue.get()
+            queue_name = await self.app.cluster.generation_queue.get()  # TODO: move generation queue to app first
             self.app.log.debug('Message in generation_queue %s', queue_name)
-            queue = await self.app.queue.generation_queue(name=queue_name)
+            queue = await self.queue.generation_queue(name=queue_name)
             self.generation_consumer.consume(queue)
 
     async def stop_listen_generation(self):
@@ -135,6 +138,14 @@ class ConsumersManager:
         """
         await self.generation_consumer.stop()
         self.generation_listener.cancel()
+
+    # pylint: disable=no-self-use
+    def event_types(self):
+        """Get event types served by this instance.
+
+        FIXME
+        """
+        return ['example_event']
 
 
 async def stop_all(consumers):

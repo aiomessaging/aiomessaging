@@ -36,10 +36,9 @@ class ConsumersManager:
     generation_consumer: GenerationConsumer
     generation_listener: asyncio.Task
 
-    def __init__(self, config, queue, generation_queue, loop=None):
+    def __init__(self, config, queue, loop=None):
         self.config = config
         self.queue = queue
-        self.generation_queue = generation_queue
         self.loop = loop
 
         self.log = logging.getLogger(__name__)
@@ -47,6 +46,7 @@ class ConsumersManager:
         self.event_consumers = {}
         self.message_consumers = {}
         self.output_consumers = defaultdict(dict)
+        self.generation_queue = asyncio.Queue(loop=loop)
 
     async def start_all(self, loop=None):
         """Start all common consumers.

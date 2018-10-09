@@ -16,7 +16,6 @@ class AiomessagingApp:
     """
     queue: QueueBackend
     config: Config
-    generation_queue: asyncio.Queue
 
     consumers: ConsumersManager
 
@@ -36,9 +35,7 @@ class AiomessagingApp:
 
         self.queue = self.config.get_queue_backend()
 
-        self.generation_queue = asyncio.Queue(loop=loop)
-
-        self.consumers = ConsumersManager(self.config, self.queue, self.generation_queue)
+        self.consumers = ConsumersManager(self.config, self.queue)
 
     def start(self, loop=None):
         """Start aiomessaging application.

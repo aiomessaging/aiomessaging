@@ -18,10 +18,9 @@ class Cluster(SingleQueueConsumer):
 
     generation_queue: asyncio.Queue
 
-    def __init__(self, queue, loop, **kwargs):
-        self.generation_queue = asyncio.Queue(loop=loop)
+    def __init__(self, queue, generation_queue, loop, **kwargs):
         self.actions = {
-            'consume': self.generation_queue
+            'consume': generation_queue
         }
 
         super().__init__(queue=queue, loop=loop, **kwargs)
@@ -29,7 +28,7 @@ class Cluster(SingleQueueConsumer):
     async def handler(self, message):
         """Handle cluster message
         """
-        self.log.debug("Cluster message recieved %s", message)
+        self.log.debug("Cluster message received %s", message)
 
         self.log.debug("Message body:\n%s", message)
         body = message
@@ -41,7 +40,7 @@ class Cluster(SingleQueueConsumer):
             return
 
         try:
-            queue = self.actions[cluster_action]
+            queue = self.actions[cluster_action]  # WTF? How action compared to queue? Why?
         except KeyError:
             self.log.error("Invalid action")
             return

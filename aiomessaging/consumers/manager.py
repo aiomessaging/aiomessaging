@@ -30,6 +30,7 @@ class ConsumersManager:
 
         self.config = app.config
         self.queue = app.queue
+        self.generation_queue = self.app.generation_queue
 
         self.event_consumers = {}
         self.message_consumers = {}
@@ -67,7 +68,7 @@ class ConsumersManager:
                 event_type=event_type,
                 event_pipeline=event_pipeline,
                 generators=generators,
-                cluster=self.app.cluster, # TODO: replace with queue of queues to consume
+                generation_queue=self.generation_queue,
                 queue=await self.queue.events_queue(event_type),
                 # TODO: replace with tmp queue factory?
                 queue_service=self.queue,
@@ -128,7 +129,7 @@ class ConsumersManager:
         await self.generation_consumer.start()
 
         while True:
-            queue_name = await self.app.cluster.generation_queue.get()  # TODO: move generation queue to app first
+            queue_name = await self.generation_queue.get()
             self.app.log.debug('Message in generation_queue %s', queue_name)
             queue = await self.queue.generation_queue(name=queue_name)
             self.generation_consumer.consume(queue)

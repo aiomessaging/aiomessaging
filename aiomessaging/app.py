@@ -19,6 +19,7 @@ class AiomessagingApp:
     cluster: Cluster
     queue: QueueBackend
     config: Config
+    generation_queue: asyncio.Queue
 
     consumers: ConsumersManager
 
@@ -37,6 +38,8 @@ class AiomessagingApp:
         self.log.info('Configuration file: %s', config)
 
         self.queue = self.config.get_queue_backend()
+
+        self.generation_queue = asyncio.Queue(loop=loop)
 
         self.consumers = ConsumersManager(self)
 
@@ -80,7 +83,11 @@ class AiomessagingApp:
         """Create Cluster instance and start cluster queue handling.
         """
         queue = await self.queue.cluster_queue()
-        self.cluster = Cluster(queue=queue, loop=self.loop)
+        self.cluster = Cluster(
+            queue=queue,
+            generation_queue=self.generation_queue,
+            loop=self.loop
+        )
         await self.cluster.start()
 
     async def send(self, event_type, payload=None):

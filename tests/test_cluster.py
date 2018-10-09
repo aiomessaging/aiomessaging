@@ -15,7 +15,8 @@ async def test_handle_action(event_loop, caplog):
     await queues.connect()
 
     queue = await queues.cluster_queue()
-    cluster = Cluster(queue=queue, loop=event_loop)
+    gen_queue = asyncio.Queue()
+    cluster = Cluster(queue=queue, generation_queue=gen_queue, loop=event_loop)
     await cluster.start()
 
     # send message and wait some time
@@ -26,9 +27,6 @@ async def test_handle_action(event_loop, caplog):
     await asyncio.sleep(0.1)
 
     await cluster.stop()
-
-    # cluster generation queue (results of "consume" action)
-    gen_queue = cluster.generation_queue
 
     assert gen_queue.empty() is False, \
         "Generation queue must contain our 'consume' message"
@@ -49,8 +47,8 @@ async def test_invalid_action(event_loop, caplog):
     await queues.connect()
 
     queue = await queues.cluster_queue()
-
-    cluster = Cluster(queue=queue, loop=event_loop)
+    gen_queue = asyncio.Queue()
+    cluster = Cluster(queue=queue, generation_queue=gen_queue, loop=event_loop)
     await cluster.start()
 
     # send message and wait some time
@@ -69,9 +67,6 @@ async def test_invalid_action(event_loop, caplog):
 
     await cluster.stop()
 
-    # cluster generation queue (results of "consume" action)
-    gen_queue = cluster.generation_queue
-
     assert gen_queue.empty() is True, \
         "Generation queue must not contain our *invalid* message"
 
@@ -88,7 +83,7 @@ async def test_start_consume(event_loop, caplog):
 
     queue = await queues.cluster_queue()
 
-    cluster = Cluster(queue=queue, loop=event_loop)
+    cluster = Cluster(queue=queue, generation_queue=asyncio.Queue(), loop=event_loop)
     await cluster.start()
 
     await cluster.start_consume('example')

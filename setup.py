@@ -33,7 +33,6 @@ setup(
         "License :: OSI Approved :: MIT License"
     ],
     install_requires=[
-        'attrdict',
         'ujson',
         'pika',
         'PyYAML',

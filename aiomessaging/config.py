@@ -1,9 +1,9 @@
+# pylint: disable=missing-docstring
 """aiomessaging config.
 """
 from typing import Dict
 
 import yaml
-from attrdict import AttrDict
 
 from .queues import QueueBackend
 from .pipeline import EventPipeline, GenerationPipeline
@@ -50,7 +50,7 @@ class ConfigLoader(yaml.Loader):
         return obj
 
 
-class BaseConfig(AttrDict):
+class BaseConfig(dict):
     """Base messaging config.
     """
     def from_file(self, filename: str):
@@ -85,10 +85,26 @@ class Config(BaseConfig):
     Allow to abstract from config structure.
     """
     @property
+    def app(self):
+        return self.get('app', {})
+
+    @property
+    def queue(self):
+        return self.get('queue', {})
+
+    @property
+    def events(self):
+        return self.get('events', {})
+
+    @property
+    def outputs(self):
+        return self.get('events', {})
+
+    @property
     def is_testing(self):
         """Is app in testing.
         """
-        return getattr(self.app, 'testing', False)
+        return self.app.get('testing', False)
 
     def get_logging_dict(self):
         """Logging dict config.
@@ -130,7 +146,7 @@ class Config(BaseConfig):
         """Event pipeline for event.
         """
         event_config = self.get_event_config(event_type)
-        pipeline = event_config.event_pipeline
+        pipeline = event_config.get('event_pipeline')
         if not isinstance(pipeline, EventPipeline):
             pipeline = EventPipeline(pipeline)
         return pipeline
@@ -139,7 +155,7 @@ class Config(BaseConfig):
         """Generation pipeline for event type.
         """
         event_config = self.get_event_config(event_type)
-        pipeline = event_config.generators
+        pipeline = event_config.get('generators')
         if not isinstance(pipeline, GenerationPipeline):
             pipeline = GenerationPipeline(pipeline)
         return pipeline
@@ -147,7 +163,7 @@ class Config(BaseConfig):
     def get_event_config(self, event_type):
         """Config for particular event type.
         """
-        return AttrDict(self.events[event_type])
+        return self.events[event_type]
 
     # pylint:disable=no-self-use
     def get_enabled_outputs(self, event_type):
@@ -161,8 +177,8 @@ class Config(BaseConfig):
     def get_log_format(self):
         """Log format.
         """
-        if hasattr(self, 'log_format') and self.log_format:
-            return self.log_format
+        if 'log_format' in self:
+            return self['log_format']
         return "%(asctime)-15s %(levelname)-7s %(message)s"
 
     def get_queue_backend(self):

@@ -10,19 +10,19 @@ class EventConsumer(SingleQueueConsumer):
 
     """Event consumer.
 
-    Receive messages from inbound queue, pass it though event pipeline,
+    Receive messages from inbound queue, pass it though event pipeline and
     generate messages using generation pipeline.
     """
 
     queue_prefix = "aiomessaging.events"
 
-    def __init__(self, event_type, event_pipeline, generators, cluster,
+    def __init__(self, event_type, event_pipeline, generators, generation_queue,
                  queue_service, **kwargs):
         super().__init__(**kwargs)
         self.event_type = event_type
         self.pipeline = event_pipeline
         self.generators = generators
-        self.cluster = cluster
+        self.generation_queue = generation_queue
         self.queue_service = queue_service
 
     async def handler(self, message):
@@ -60,4 +60,4 @@ class EventConsumer(SingleQueueConsumer):
     async def start_consume(self, queue):
         """ Start consume queue with generated messages
         """
-        await self.cluster.start_consume(queue.name)
+        await self.generation_queue.put(queue.name)

@@ -241,7 +241,7 @@ class AiomessagingApp:
 
 
 async def stop_all(consumers):
-    """Stop all consumers helper.
+    """Stop all consumers.
     """
     # pylint: disable=expression-not-assigned
     [await a.stop() for a in consumers.values()]

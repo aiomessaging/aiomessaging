@@ -7,10 +7,8 @@ import logging.config
 from collections import defaultdict
 
 from .config import Config
-from .consumers import EventConsumer
+from .consumers import ConsumersManager
 from .consumers import GenerationConsumer
-from .consumers import MessageConsumer
-from .consumers import OutputConsumer
 from .cluster import Cluster
 from .router import Router
 from .queues import QueueBackend
@@ -27,13 +25,13 @@ class AiomessagingApp:
     generation_consumer: GenerationConsumer
     generation_listener = None
 
+    consumers: ConsumersManager
+
     log: logging.Logger
 
     def __init__(self, config=None, loop=None):
-        self.event_consumers = {}
-        self.message_consumers = {}
-        self.output_consumers = defaultdict(dict)
         self.loop = loop
+        self.consumers = ConsumersManager(self)
 
         self.set_event_loop(loop)
 
@@ -86,9 +84,7 @@ class AiomessagingApp:
         await self.queue.connect()
 
         await self.create_cluster()
-        await self.create_event_consumers()
-        await self.create_message_consumers()
-        await self.create_output_consumers()
+        await self.consumers.start_all()
 
     async def create_cluster(self):
         """Create Cluster instance and start cluster queue handling.
@@ -129,58 +125,6 @@ class AiomessagingApp:
         """
         await self.generation_consumer.stop()
         self.generation_listener.cancel()
-
-    async def create_event_consumers(self):
-        """Create consumers for each event type.
-        """
-        for event_type in self.event_types():
-            event_pipeline = self.config.get_event_pipeline(event_type)
-            generators = self.config.get_generators(event_type)
-
-            self.event_consumers[event_type] = EventConsumer(
-                event_type=event_type,
-                event_pipeline=event_pipeline,
-                generators=generators,
-                cluster=self.cluster,
-                queue=await self.queue.events_queue(event_type),
-                # TODO: replace with tmp queue factory?
-                queue_service=self.queue,
-                loop=self.loop,
-            )
-            await self.event_consumers[event_type].start()
-
-    async def create_message_consumers(self):
-        """Create message consumers.
-        """
-
-        for event_type in self.event_types():
-            self.log.debug("Create event consumer for type %s", event_type)
-
-            self.message_consumers[event_type] = MessageConsumer(
-                event_type,
-                router=self.get_router(event_type),
-                output_queue=await self.queue.output_queue(event_type),
-                available_outputs=self.config.get_enabled_outputs(event_type),
-                queue=await self.queue.messages_queue(event_type),
-                loop=self.loop
-            )
-            await self.message_consumers[event_type].start()
-
-    async def create_output_consumers(self):
-        """Create output consumers.
-        """
-        for event_type in self.event_types():
-            for output in self.config.get_enabled_outputs(event_type):
-                queue = await self.queue.output_queue(event_type, output)
-                messages_queue = await self.queue.messages_queue(event_type)
-                self.output_consumers[output][event_type] = OutputConsumer(
-                    router=self.get_router(event_type),
-                    event_type=event_type,
-                    messages_queue=messages_queue,
-                    queue=queue,
-                    loop=self.loop
-                )
-                await self.output_consumers[output][event_type].start()
 
     async def send(self, event_type, payload=None):
         """Publish event to the events queue.
@@ -231,17 +175,7 @@ class AiomessagingApp:
         await self.stop_listen_generation()
         await self.cluster.stop()
 
-        await stop_all(self.event_consumers)
-        await stop_all(self.message_consumers)
-        for group in self.output_consumers.values():
-            await stop_all(group)
+        await self.consumers.stop_all()
 
         await self.queue.close()
         self.log.info("Shutdown complete.")
-
-
-async def stop_all(consumers):
-    """Stop all consumers.
-    """
-    # pylint: disable=expression-not-assigned
-    [await a.stop() for a in consumers.values()]

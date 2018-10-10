@@ -80,7 +80,12 @@ async def send_test_message(connection, queue_name="aiomessaging.tests",
             "event_id": "123",
             "event_type": "example_event"
         }
-    await backend.publish(exchange='', routing_key=queue_name, body=body)
+    queue = await backend.get_queue(
+        exchange='',
+        exchange_type='direct',
+        routing_key=queue_name
+    )
+    await queue.publish(body=body, routing_key=queue_name)
 
 
 def has_log_message(caplog, message=None, level=None):

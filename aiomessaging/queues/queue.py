@@ -101,7 +101,7 @@ class Queue(AbstractQueue):
         self.auto_delete = auto_delete
         self.durable = durable
 
-        assert self.exchange or self.name is not None, \
+        assert self.exchange is not None or self.name is not None, \
             ("You must define name if you want to consume queue"
              "or exchange if you want to publish to this queue.")
 

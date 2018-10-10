@@ -1,13 +1,11 @@
 """Messaging queue backend.
 """
 import logging
-import warnings
 import asyncio
 
 from typing import Dict
 
 import pika
-import ujson
 
 from ..utils import gen_id
 
@@ -134,22 +132,6 @@ class QueueBackend:
 
         self.connection.channel(on_open_callback=on_channel)
         return await asyncio.wait_for(future, timeout=DECLARE_CHANNEL_TIMEOUT)
-
-    async def publish(self, exchange, routing_key, body):
-        """Publish message to queue.
-
-        DEPRECATED
-        """
-        warnings.warn("QueueBackend.publish is deprecated and will be removed"
-                      " in future versions")
-        channel = await self.channel()
-        properties = pika.BasicProperties(app_id='example-publisher',
-                                          content_type='application/json')
-        # pylint: disable=c-extension-no-member
-        channel.basic_publish(exchange, routing_key,
-                              ujson.dumps(body, ensure_ascii=False),
-                              properties)
-        channel.close()
 
     def on_channel_closed(self, channel, reply_code, reply_text):
         """Handle channel closed event.

@@ -34,6 +34,11 @@ async def test_listen_generation(event_loop, app):
     await asyncio.sleep(0.5)
 
 
+@pytest.mark.asyncio
+async def test_default_config():
+    AiomessagingApp()
+
+
 @pytest.fixture()
 def app():
     """App fixture with testing config.

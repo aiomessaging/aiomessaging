@@ -30,6 +30,8 @@ class AiomessagingApp:
 
         if config:
             self.config.from_file(config)
+        else:
+            self.config.from_default_locations()
 
         self.configure_logging()
         self.log.info('Configuration file: %s', config)

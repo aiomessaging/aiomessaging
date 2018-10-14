@@ -36,13 +36,13 @@ class Cluster(SingleQueueConsumer):
         try:
             cluster_action = body['action']
         except KeyError:
-            self.log.error("No action in message: %s", body)
+            self.log.error("No action in cluster message: %s", body)
             return
 
         try:
             queue = self.actions[cluster_action]  # WTF? How action compared to queue? Why?
         except KeyError:
-            self.log.error("Invalid action")
+            self.log.error("Invalid cluster action")
             return
 
         try:

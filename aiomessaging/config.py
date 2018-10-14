@@ -122,7 +122,6 @@ class Config(BaseConfig):
     def get_logging_dict(self):
         """Logging dict config.
         """
-        return {}
         return {
             "version": 1,
             "disable_existing_loggers": True,

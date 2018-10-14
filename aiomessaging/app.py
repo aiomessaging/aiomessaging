@@ -27,6 +27,7 @@ class AiomessagingApp:
         self.set_event_loop(loop)
 
         self.config = Config()
+
         if config:
             self.config.from_file(config)
 
@@ -87,9 +88,6 @@ class AiomessagingApp:
         """Configure logging.
         """
         self.log = logging.getLogger(__name__)
-        logging.basicConfig(
-            format=self.config.get_log_format()
-        )
 
         if self.config.is_testing:
             # skip config for tests, because it replaces caplog handlers

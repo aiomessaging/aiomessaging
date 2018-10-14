@@ -186,7 +186,7 @@ class Config(BaseConfig):
 
         Instantiate queue backend based on configuration.
         """
-        conf = self.queue
+        conf = self.get('queue', {'backend': 'rabbitmq'})
         if not conf:  # pragma: no cover
             raise Exception("No queue configuration")
         backend_name = conf.pop('backend')

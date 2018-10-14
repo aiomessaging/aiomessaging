@@ -6,7 +6,7 @@ import asyncio
 from typing import Dict
 from collections import defaultdict
 
-from ..queues import AbstractQueue
+from ..queues import QueueBackend
 from ..config import Config
 from ..router import Router
 from ..cluster import Cluster
@@ -26,7 +26,7 @@ class ConsumersManager:
     """
 
     config: Config
-    queue: AbstractQueue
+    queue: QueueBackend
     generation_queue: asyncio.Queue
     loop: asyncio.AbstractEventLoop
     cluster: Cluster

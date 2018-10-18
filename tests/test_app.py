@@ -1,8 +1,12 @@
+"""
+Application object tests.
+"""
 import asyncio
+from unittest import mock
+
 import pytest
 
 from aiomessaging.app import AiomessagingApp
-from .helpers import send_test_message
 
 
 def test_sync(event_loop, app):
@@ -36,11 +40,13 @@ async def test_listen_generation(event_loop, app):
 
 @pytest.mark.asyncio
 async def test_default_config():
-    AiomessagingApp()
+    with mock.patch('aiomessaging.app.apply_logging_configuration'):
+        AiomessagingApp()
 
 
 @pytest.fixture()
 def app():
     """App fixture with testing config.
     """
-    return AiomessagingApp(config='tests/testing.yml')
+    with mock.patch('aiomessaging.app.apply_logging_configuration'):
+        return AiomessagingApp(config='tests/testing.yml')

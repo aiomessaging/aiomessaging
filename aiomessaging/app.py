@@ -3,11 +3,19 @@
 import os
 import asyncio
 import logging
-import logging.config
+from logging.config import dictConfig
 
 from .config import Config
 from .consumers import ConsumersManager
 from .queues import QueueBackend
+
+
+def apply_logging_configuration(config):  # pragma: no cover
+    """Apply dict logging configuration.
+
+    Allows to mock logging in test to prevent caplog overwrites.
+    """
+    dictConfig(config)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -88,12 +96,7 @@ class AiomessagingApp:
         """Configure logging.
         """
         self.log = logging.getLogger(__name__)
-
-        if self.config.is_testing:
-            # skip config for tests, because it replaces caplog handlers
-            return
-
-        # logging.config.dictConfig(self.config.get_logging_dict())  # pragma: no cover
+        apply_logging_configuration(self.config.get_logging_dict())
 
     def set_event_loop(self, loop):
         """Set event loop to run on.

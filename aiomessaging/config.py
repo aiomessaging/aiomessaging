@@ -80,13 +80,11 @@ class BaseConfig(dict):
 
 
 class Config(BaseConfig):
+
     """aiomessaging config.
 
     Allow to abstract from config structure.
     """
-    @property
-    def app(self):
-        return self.get('app', {})
 
     @property
     def events(self):
@@ -94,13 +92,7 @@ class Config(BaseConfig):
 
     @property
     def outputs(self):
-        return self.get('events', {})
-
-    @property
-    def is_testing(self):
-        """Is app in testing.
-        """
-        return self.app.get('testing', False)
+        return self.get('outputs', {})
 
     def get_logging_dict(self):
         """Logging dict config.

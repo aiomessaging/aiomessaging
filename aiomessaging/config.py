@@ -1,7 +1,6 @@
 # pylint: disable=missing-docstring
 """aiomessaging config.
 """
-import os
 from typing import Dict
 
 import yaml

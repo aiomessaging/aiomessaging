@@ -100,11 +100,6 @@ class Effect(NamedSerializable, abc.ABC):
         """
         pass  # pragma: no cover
 
-    def skip_next(self, state):
-        """Skip next effect action
-        """
-        pass  # pragma: no cover
-
     @abc.abstractmethod
     def apply(self, message):
         """Apply next action and return next state.
@@ -156,12 +151,6 @@ class SendEffect(Effect):
         if state[position] == OutputStatus.CHECK:
             return CheckOutputAction(selected_output)
         return SendOutputAction(selected_output)
-
-    def skip_next(self, state=None):
-        state = self.reset_state(state)
-        position = self.next_action_pos(state)
-        state[position] = OutputStatus.SKIP
-        return state
 
     def next_action_pos(self, state):
         """Next effect action position.

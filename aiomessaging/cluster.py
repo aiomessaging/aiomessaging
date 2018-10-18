@@ -58,3 +58,12 @@ class Cluster(SingleQueueConsumer):
             {'action': 'consume', 'queue_name': queue_name}
         )
         self.log.debug("tell cluster to start consume %s", queue_name)
+
+    async def output_observed(self, event_type, output):
+        """Publish to cluster new output backends.
+        """
+        await self.queue.publish({
+            'action': 'output_observed',
+            'event_type': event_type,
+            'output': output.serialize()
+        })

@@ -30,8 +30,6 @@ class AiomessagingApp:
 
         if config:
             self.config.from_file(config)
-        else:
-            self.config.from_default_locations()
 
         self.configure_logging()
         self.log.info('Configuration file: %s', config)
@@ -95,7 +93,7 @@ class AiomessagingApp:
             # skip config for tests, because it replaces caplog handlers
             return
 
-        logging.config.dictConfig(self.config.get_logging_dict())  # pragma: no cover
+        # logging.config.dictConfig(self.config.get_logging_dict())  # pragma: no cover
 
     def set_event_loop(self, loop):
         """Set event loop to run on.

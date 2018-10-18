@@ -60,18 +60,6 @@ class BaseConfig(dict):
         with open(filename, 'r') as fp:
             self.from_fp(fp)
 
-    def from_default_locations(self):
-        """Load config from default locations.
-        """
-        locations = (
-            './messaging.yml',
-            '/etc/aiomessaging/messaging.yml',
-        )
-        for path in locations:
-            if os.path.exists(path):
-                self.from_file(path)
-                break
-
     def from_fp(self, fp):
         """Load config from file pointer.
         """
@@ -100,10 +88,6 @@ class Config(BaseConfig):
     @property
     def app(self):
         return self.get('app', {})
-
-    @property
-    def queue(self):
-        return self.get('queue', {})
 
     @property
     def events(self):

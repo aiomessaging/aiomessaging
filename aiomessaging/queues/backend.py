@@ -219,9 +219,11 @@ class QueueBackend:
         """
         return await self.get_queue(
             name=f"messages.{event_type}",
-            auto_delete=False, durable=True,
-            exchange=f'messages.{event_type}', exchange_type=self.TYPE_DIRECT,
-            routing_key=event_type
+            exchange=f'messages.{event_type}',
+            exchange_type=self.TYPE_DIRECT,
+            routing_key=event_type,
+            auto_delete=False,
+            durable=True,
         )
 
     async def cluster_queue(self) -> Queue:

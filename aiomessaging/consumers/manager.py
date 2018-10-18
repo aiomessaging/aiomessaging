@@ -38,7 +38,7 @@ class ConsumersManager:
     generation_consumer: GenerationConsumer
     generation_listener: asyncio.Task
 
-    def __init__(self, config, queue, loop=None):
+    def __init__(self, config, queue: QueueBackend, loop=None):
         self.config = config
         self.queue = queue
         self.loop = loop

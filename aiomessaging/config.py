@@ -117,15 +117,10 @@ class Config(BaseConfig):
                     "level": "INFO",
                     "handlers": ["console"],
                     "propagate": False
-                },
-                "aiomessaging.message": {
-                    "level": "DEBUG",
-                    "handlers": ["console"],
-                    "propagate": False
                 }
             },
             "root": {
-                "level": "INFO",
+                "level": "ERROR",
                 "handlers": ["console"]
             },
         }

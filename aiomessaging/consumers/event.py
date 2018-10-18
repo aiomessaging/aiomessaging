@@ -16,8 +16,8 @@ class EventConsumer(SingleQueueConsumer):
 
     queue_prefix = "aiomessaging.events"
 
-    def __init__(self, event_type, event_pipeline, generators, generation_queue,
-                 queue_service, **kwargs):
+    def __init__(self, event_type, event_pipeline, generators,
+                 generation_queue, queue_service, **kwargs):
         super().__init__(**kwargs)
         self.event_type = event_type
         self.pipeline = event_pipeline

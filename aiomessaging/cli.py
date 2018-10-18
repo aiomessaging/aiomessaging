@@ -1,6 +1,7 @@
 """
 aiomessaging can be started with `python -m aiomessaging`
 """
+import time
 import json
 import asyncio
 
@@ -41,11 +42,10 @@ def worker(config):
 @click.argument('payload')
 @click.option('-c', '--config')
 @click.option('--count', default=1)
-def send(event_type, payload, config, count):
+@click.option('--loop/--no-loop', default=False)
+def send(event_type, payload, *args, **kwargs):
     """Create and send event.
     """
-    app = AiomessagingApp(config)
-
     if payload is None:
         payload = {
             'a': 1
@@ -53,11 +53,23 @@ def send(event_type, payload, config, count):
     else:
         payload = json.loads(payload)
 
-    for _ in range(count):
-        asyncio.run(app.send(event_type, payload))
+    asyncio.run(send_event(event_type, payload, *args, **kwargs))
 
     click.echo("Events was published")
 
+
+async def send_event(event_type, payload, config, count, loop):
+    app = AiomessagingApp(config)
+
+    while True:
+        try:
+            for _ in range(count):
+                await app.send(event_type, payload)
+            await asyncio.sleep(1)
+        except KeyboardInterrupt:
+            break
+        if not loop:
+            break
 
 cli.add_command(init)
 cli.add_command(worker)

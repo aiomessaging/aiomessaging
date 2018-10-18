@@ -54,6 +54,6 @@ class AbstractOutputBackend(ABC, Serializable):
     def check(self, message: Message):
         """Check delivery status for message.
 
-        Can raise `NotImplemented()` if backend doesn't support delivery check.
+        Can raise `NoDeliveryCheck` if backend doesn't support delivery check.
         """
         raise NoDeliveryCheck  # pragma: no cover

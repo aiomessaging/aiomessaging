@@ -46,8 +46,6 @@ class MessageConsumer(BaseMessageConsumer):
             while True:
                 effect = self.router.next_effect(message)
                 if effect is None:
-                    # TODO: implement same logic as message delivered in output
-                    #       consumer
                     message.log.warning(
                         "No next effect for message (in message consumer)"
                     )

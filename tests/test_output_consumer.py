@@ -25,7 +25,7 @@ from .helpers import (
 async def test_output_consumer_handler(backend, caplog):
     async with OutputConsumerContext(backend, 'null', sequence_pipeline) as consumer:
         await send_test_message(backend.connection, consumer.queue.name)
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.1)
 
     assert log_count(caplog, level='ERROR') == 0
 
@@ -34,7 +34,7 @@ async def test_output_consumer_handler(backend, caplog):
 async def test_failing_output(backend, caplog):
     async with OutputConsumerContext(backend, 'null', failing_output_pipeline) as consumer:
         await send_test_message(backend.connection, consumer.queue.name)
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.1)
 
     assert log_count(caplog, level='ERROR') == 1
 
@@ -47,6 +47,6 @@ async def test_dummy_consumers(backend, caplog):
                     async with OutputConsumerContext(backend, 'never', all_dummy_pipeline):
                         async with MessageConsumerContext(backend, all_dummy_pipeline) as consumer:
                             await send_test_message(backend.connection, consumer.queue.name)
-                            await asyncio.sleep(1)
+                            await asyncio.sleep(0.1)
 
     assert log_count(caplog, level='ERROR') == 0

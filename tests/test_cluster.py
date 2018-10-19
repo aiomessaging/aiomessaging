@@ -88,7 +88,7 @@ async def test_start_consume(event_loop, caplog):
 
     await cluster.start_consume('example')
 
-    await asyncio.sleep(1)
+    await asyncio.sleep(0.1)
 
     await cluster.stop()
     await queues.close()

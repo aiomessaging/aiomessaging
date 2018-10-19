@@ -1,7 +1,6 @@
 """
 aiomessaging can be started with `python -m aiomessaging`
 """
-import time
 import json
 import asyncio
 
@@ -59,6 +58,8 @@ def send(event_type, payload, *args, **kwargs):
 
 
 async def send_event(event_type, payload, config, count, loop):
+    """Send event to input queue.
+    """
     app = AiomessagingApp(config)
 
     while True:

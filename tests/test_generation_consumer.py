@@ -35,7 +35,7 @@ async def test_simple(event_loop, caplog):
         body=message.to_dict()
     )
 
-    await asyncio.sleep(1)
+    await asyncio.sleep(0.1)
 
     await consumer.stop()
     await backend.close()

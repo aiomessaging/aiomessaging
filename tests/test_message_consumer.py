@@ -36,7 +36,7 @@ async def test_simple(event_loop, caplog):
     message = Message(event_type='example_event', event_id='1')
     await queue.publish(message.to_dict())
 
-    await asyncio.sleep(1)
+    await asyncio.sleep(0.1)
 
     await consumer.stop()
     await backend.close()
@@ -65,7 +65,7 @@ async def test_output_not_available(event_loop, caplog):
     message = Message(event_type='example_event', event_id='1')
     await queue.publish(message.to_dict())
 
-    await asyncio.sleep(1)
+    await asyncio.sleep(0.1)
 
     await consumer.stop()
     await backend.close()

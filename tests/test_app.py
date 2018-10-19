@@ -16,7 +16,7 @@ def test_sync(event_loop, app):
 
     TODO: check no errors
     """
-    event_loop.call_later(1, app.stop)
+    event_loop.call_later(0.5, app.stop)
     app.start(loop=event_loop)
 
 
@@ -28,15 +28,10 @@ async def test_listen_generation(event_loop, app):
     await app._start()
 
     await app.send('example_event', {})
-    await asyncio.sleep(1)
+
+    await asyncio.sleep(0.1)
 
     await app.shutdown()
-
-    # TODO: this timeout required to prevent asyncio warnings looks like we
-    #       need to wait something specific in `app.shutdown()``
-    #       (`GenerationConsumer._monitor_generation`)
-    await asyncio.sleep(0.5)
-
 
 @pytest.mark.asyncio
 async def test_default_config():

@@ -56,6 +56,8 @@ class GenerationConsumer(MessageConsumerMixIn, BaseConsumer):
         """
         await super().stop()
         await self._stop_consumer_monitoring()
+        for queue in self.last_recived_time:
+            await queue.delete()
 
     async def handle_message(self, message: Message):
         message.log.debug("Send message to output")
@@ -117,4 +119,4 @@ class GenerationConsumer(MessageConsumerMixIn, BaseConsumer):
                         'Empty. Cancel by generation monitoring after %f',
                         self.cleanup_timeout
                     )
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.1)

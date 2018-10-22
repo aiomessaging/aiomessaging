@@ -27,7 +27,7 @@ async def test_simple(event_loop, caplog):
         router=router,
         output_queue=output_queue,
         queue=queue,
-        available_outputs=('console', 'check', 'retry', 'never'),
+        output_observation_queue=asyncio.Queue(),
         loop=event_loop
     )
 
@@ -45,7 +45,7 @@ async def test_simple(event_loop, caplog):
 
 
 @pytest.mark.asyncio
-async def test_output_not_available(event_loop, caplog):
+async def test_any_output_available(event_loop, caplog):
     backend = QueueBackend()
     await backend.connect()
     output_queue = await backend.output_queue('example_event', 'sns')
@@ -56,7 +56,7 @@ async def test_output_not_available(event_loop, caplog):
         router=router,
         output_queue=output_queue,
         queue=queue,
-        available_outputs=(),
+        output_observation_queue=asyncio.Queue(),
         loop=event_loop
     )
 
@@ -71,4 +71,4 @@ async def test_output_not_available(event_loop, caplog):
     await backend.close()
 
     # Skip output logs
-    assert log_count(caplog, level='ERROR') == 3
+    assert log_count(caplog, level='ERROR') == 0

@@ -1,10 +1,13 @@
 """Message consumer.
 """
+import asyncio
+
 from ..message import Message
 from ..router import Router
+from ..queues import AbstractQueue
+from ..actions import SendOutputAction, CheckOutputAction
 
 from .base import BaseMessageConsumer
-from ..actions import SendOutputAction, CheckOutputAction
 
 
 class OutputNotAvailable(Exception):
@@ -27,15 +30,18 @@ class MessageConsumer(BaseMessageConsumer):
     workers.
     """
 
+    event_type: str
     router: Router
+    output_queue: AbstractQueue
+    output_observation_queue: asyncio.Queue
 
     def __init__(self, event_type, router: Router, output_queue,
-                 available_outputs, **kwargs) -> None:
+                 output_observation_queue, **kwargs) -> None:
         super().__init__(**kwargs)
         self.event_type = event_type
         self.router = router
         self.output_queue = output_queue
-        self.available_outputs = available_outputs
+        self.output_observation_queue = output_observation_queue
 
     async def handle_message(self, message: Message):
         """Message handler.
@@ -45,11 +51,6 @@ class MessageConsumer(BaseMessageConsumer):
         try:
             while True:
                 effect = self.router.next_effect(message)
-                if effect is None:
-                    message.log.warning(
-                        "No next effect for message (in message consumer)"
-                    )
-                    break
                 prev_state = message.get_route_state(effect)
                 action = effect.next_action(prev_state)
 
@@ -57,14 +58,10 @@ class MessageConsumer(BaseMessageConsumer):
                     # send message to output queue
                     output = action.get_output()
 
-                    if output.name not in self.available_outputs:
-                        self.router.skip_next_effect(message)
-                        message.log.error(
-                            "Output %s skipped because it is not available. "
-                            "Available outputs: %s",
-                            output.name, self.available_outputs
-                        )
-                        continue
+                    # manager will create output consumer for us if possible
+                    await self.output_observation_queue.put(
+                        [self.event_type, output]
+                    )
 
                     await self.output_queue.publish(
                         message.to_dict(), routing_key=output.name

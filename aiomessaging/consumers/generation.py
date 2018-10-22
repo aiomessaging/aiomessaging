@@ -10,7 +10,7 @@ from ..queues import AbstractQueue
 from .base import MessageConsumerMixIn, BaseConsumer
 
 
-QUEUE_CLEANUP_TIMEOUT = 1
+QUEUE_CLEANUP_TIMEOUT = 10
 
 
 class GenerationConsumer(MessageConsumerMixIn, BaseConsumer):
@@ -36,7 +36,6 @@ class GenerationConsumer(MessageConsumerMixIn, BaseConsumer):
         super().__init__(**kwargs)
         self.messages_queue = messages_queue
         self.last_recived_time = {}
-        self.last_time = time.time()
         self.cleanup_timeout = cleanup_timeout
 
         self._consumer_monitoring_task = None

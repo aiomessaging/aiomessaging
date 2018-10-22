@@ -10,7 +10,6 @@ from ..queues import QueueBackend
 from ..config import Config
 from ..router import Router
 from ..cluster import Cluster
-from ..outputs import AbstractOutputBackend
 
 from .event import EventConsumer
 from .message import MessageConsumer
@@ -87,6 +86,7 @@ class ConsumersManager:
 
         await stop_all(self.event_consumers)
         await stop_all(self.message_consumers)
+
         for group in self.output_consumers.values():
             await stop_all(group)
 
@@ -148,7 +148,7 @@ class ConsumersManager:
         """Start output consumer for provided event type.
 
         :param str event_type: event type
-        :param AbstractOutputBackend output: output backend instance
+        :param str output: output backend name
         """
         queue = await self.queue.output_queue(event_type, output)
         messages_queue = await self.queue.messages_queue(event_type)
@@ -196,9 +196,10 @@ class ConsumersManager:
         self.log.debug("Start listen outputs observations")
         while True:
             [event_type, output] = await self.output_observation_queue.get()
-            self.log.debug("New output observed")
-            await self.start_output_consumer(event_type, output.name)
-            await self.cluster.output_observed(event_type, output)
+            if event_type not in self.output_consumers[output.name]:
+                self.log.debug("New output observed: %s", output.name)
+                await self.start_output_consumer(event_type, output.name)
+                await self.cluster.output_observed(event_type, output)
 
     async def stop_listen_output_observations(self):
         """Stop listen outputs discovery.

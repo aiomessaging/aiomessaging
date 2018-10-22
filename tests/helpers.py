@@ -2,6 +2,7 @@
 tests helpers
 """
 import logging
+import asyncio
 
 from aiomessaging.queues import QueueBackend
 from aiomessaging.consumers import OutputConsumer, MessageConsumer
@@ -61,8 +62,8 @@ class MessageConsumerContext:
             event_type='example_event',
             router=router,
             output_queue=output_queue,
-            available_outputs=('console', 'check', 'retry', 'never'),
-            queue=queue
+            queue=queue,
+            output_observation_queue=asyncio.Queue(),
         )
         await self.message_consumer.start()
         return self.message_consumer

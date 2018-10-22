@@ -85,7 +85,7 @@ class AiomessagingApp:
         """Publish event to the events queue.
         """
         if not self.queue.is_open:
-            await self.queue.connect()
+            await self.queue.connect()  # pragma: no cover
 
         queue = await self.queue.events_queue(event_type)
         # because we publish to '' exchange by default

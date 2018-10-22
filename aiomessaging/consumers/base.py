@@ -76,6 +76,7 @@ class BaseConsumer:
     async def start(self):
         """Start consumer and monitoring tasks.
         """
+        assert not self.running and not hasattr(self, 'monitoring_task')
         self.running = True
         self.monitoring_task = self.loop.create_task(self._monitoring())
 

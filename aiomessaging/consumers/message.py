@@ -51,11 +51,6 @@ class MessageConsumer(BaseMessageConsumer):
         try:
             while True:
                 effect = self.router.next_effect(message)
-                if effect is None:
-                    message.log.warning(
-                        "No next effect for message (in message consumer)"
-                    )
-                    break
                 prev_state = message.get_route_state(effect)
                 action = effect.next_action(prev_state)
 

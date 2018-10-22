@@ -1,7 +1,6 @@
 """
 Application object tests.
 """
-import asyncio
 from unittest import mock
 
 import pytest
@@ -29,9 +28,8 @@ async def test_listen_generation(event_loop, app):
 
     await app.send('example_event', {})
 
-    await asyncio.sleep(0.1)
-
     await app.shutdown()
+
 
 @pytest.mark.asyncio
 async def test_default_config():

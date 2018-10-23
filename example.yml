@@ -8,10 +8,6 @@ queue:
 # key-value storage configuration
 kvstore:
   backend: dummy
-outputs:
-  retry: aiomessaging.contrib.dummy.RetryOutput
-  never: aiomessaging.contrib.dummy.NeverDeliveredOutput
-  console: aiomessaging.contrib.dummy.ConsoleOutput
 events:
   example_event:
     event_pipeline:

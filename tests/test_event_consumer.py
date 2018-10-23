@@ -7,7 +7,12 @@ from aiomessaging.cluster import Cluster
 from aiomessaging.queues import QueueBackend
 from aiomessaging.event import Event
 
-from .helpers import send_test_message, has_log_message, log_count
+from .helpers import (
+    send_test_message,
+    has_log_message,
+    log_count,
+    wait_messages,
+)
 
 
 @pytest.mark.asyncio
@@ -42,7 +47,7 @@ async def test_start(event_loop: asyncio.AbstractEventLoop, caplog):
         queue_name=queue.name,
         body={'type': 'example', 'a': 1}
     )
-    await asyncio.sleep(0.2)
+    await wait_messages(consumer)
     await consumer.stop()
     await cluster.stop()
     await backend.close()
@@ -79,6 +84,8 @@ async def test_error_handler(event_loop: asyncio.AbstractEventLoop, caplog):
         queue_name=queue.name,
         body={'type': 'example', 'a': 1}
     )
+
+    # TODO: wait_messages for failed handlers
     await asyncio.sleep(0.1)
     await consumer.stop()
     await cluster.stop()

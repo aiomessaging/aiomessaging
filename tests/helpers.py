@@ -109,3 +109,10 @@ def log_count(caplog, message=None, level=None):
         if message and message in r.getMessage():
             result += 1
     return result
+
+
+async def wait_messages(consumer, count=1):
+    """Wait for specified amount of messages to be handled by consumer.
+    """
+    for _ in range(count):
+        await consumer.last_messages.get()

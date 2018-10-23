@@ -4,7 +4,11 @@ import pytest
 from aiomessaging.queues import QueueBackend
 from aiomessaging.consumers.base import BaseConsumer, SingleQueueConsumer
 
-from .helpers import send_test_message, log_count
+from .helpers import (
+    send_test_message,
+    log_count,
+    wait_messages,
+)
 
 
 class CounterConsumerMixin:
@@ -24,7 +28,7 @@ async def test_simple(event_loop, caplog):
     """Simple consumer test.
 
     Start consumer, send message, check that message
-    succesfully delivered to handler method.
+    successfully delivered to handler method.
     """
 
     class CounterConsumer(CounterConsumerMixin, SingleQueueConsumer):
@@ -44,7 +48,7 @@ async def test_simple(event_loop, caplog):
     await consumer.start()
 
     await send_test_message(connection, "example_queue")
-    await asyncio.sleep(0.1)
+    await wait_messages(consumer)
     await consumer.stop()
     assert consumer.counter == 1
 
@@ -81,6 +85,7 @@ async def test_fail(event_loop, caplog):
 
     await send_test_message(None)
 
+    # TODO: we need ability to get last failed messages
     await asyncio.sleep(0.1)
 
     await consumer.stop()
@@ -115,10 +120,7 @@ async def test_consume_multiple_queues(event_loop, caplog):
     await send_test_message(backend.connection, "test_mult_1")
     await send_test_message(backend.connection, "test_mult_2")
 
-    # TODO: wait for somthing specific. Pending task destroyed warns only in
-    #       case of two messages (have time to switch to consumer once without
-    #       sleep).
-    await asyncio.sleep(0.1)
+    await wait_messages(consumer, 2)
 
     await consumer.stop()
 

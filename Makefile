@@ -1,5 +1,5 @@
 export PYTHONPATH=.
-PYTEST_COV_PARAMS=--cov-report=term-missing --cov aiomessaging --cov-report xml:cov.xml
+PYTEST_COV_PARAMS=--cov-report=term-missing --cov aiomessaging --cov-report xml:cov.xml --durations=5
 
 .PHONY: docs
 

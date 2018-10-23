@@ -10,7 +10,11 @@ from aiomessaging.queues import QueueBackend
 from aiomessaging.router import Router
 from aiomessaging.contrib.dummy.pipelines import example_pipeline
 
-from .helpers import has_log_message, log_count
+from .helpers import (
+    has_log_message,
+    log_count,
+    wait_messages,
+)
 
 
 @pytest.mark.asyncio
@@ -36,7 +40,7 @@ async def test_simple(event_loop, caplog):
     message = Message(event_type='example_event', event_id='1')
     await queue.publish(message.to_dict())
 
-    await asyncio.sleep(0.1)
+    await wait_messages(consumer)
 
     await consumer.stop()
     await backend.close()
@@ -65,7 +69,7 @@ async def test_any_output_available(event_loop, caplog):
     message = Message(event_type='example_event', event_id='1')
     await queue.publish(message.to_dict())
 
-    await asyncio.sleep(0.1)
+    await wait_messages(consumer)
 
     await consumer.stop()
     await backend.close()

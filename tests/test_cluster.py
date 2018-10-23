@@ -4,7 +4,12 @@ import pytest
 from aiomessaging.cluster import Cluster
 from aiomessaging.queues import QueueBackend
 
-from .helpers import has_log_message, log_count, send_test_message
+from .helpers import (
+    has_log_message,
+    log_count,
+    send_test_message,
+    wait_messages,
+)
 
 
 @pytest.mark.asyncio
@@ -24,7 +29,7 @@ async def test_handle_action(event_loop, caplog):
         "action": "consume",
         "queue_name": "example"
     })
-    await asyncio.sleep(0.1)
+    await wait_messages(cluster)
 
     await cluster.stop()
 
@@ -63,7 +68,7 @@ async def test_invalid_action(event_loop, caplog):
         "queue_name": "example"
     })
 
-    await asyncio.sleep(0.1)
+    await wait_messages(cluster, 3)
 
     await cluster.stop()
 
@@ -88,7 +93,7 @@ async def test_start_consume(event_loop, caplog):
 
     await cluster.start_consume('example')
 
-    await asyncio.sleep(0.1)
+    await wait_messages(cluster)
 
     await cluster.stop()
     await queues.close()

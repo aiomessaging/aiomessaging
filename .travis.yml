@@ -1,16 +1,14 @@
+sudo: true
+dist: xenial
 language: python
 jobs:
   include:
     - stage: lint
-      sudo: true
-      dist: xenial
       python: "3.7"
       install:
         - pip install -e .[dev]
       script: pylint aiomessaging
     - python: "3.7"
-      sudo: true
-      dist: xenial
       install:
         - pip install -e .[dev]
       script: mypy aiomessaging --ignore-missing-imports
@@ -25,8 +23,6 @@ jobs:
         - pytest --cov-report=term-missing --cov aiomessaging
     - services:
         - rabbitmq
-      sudo: true
-      dist: xenial
       python: "3.7"
       install:
         - pip install -e .[dev]

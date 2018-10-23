@@ -6,7 +6,7 @@ from aiomessaging.message import Message
 from aiomessaging.event import Event
 from aiomessaging.queues import QueueBackend
 
-from .helpers import send_test_message, has_log_message
+from .helpers import send_test_message, has_log_message, wait_messages
 
 
 @pytest.mark.asyncio
@@ -35,7 +35,7 @@ async def test_simple(event_loop, caplog):
         body=message.to_dict()
     )
 
-    await consumer.last_messages.get()
+    await wait_messages(consumer)
     # TODO: replace with a separate and specific test (tmp queue deletion)
     # wait tmp queue deletion
     await asyncio.sleep(0.1)

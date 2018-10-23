@@ -7,6 +7,8 @@ import pytest
 
 from aiomessaging.app import AiomessagingApp
 
+from .helpers import wait_messages
+
 
 def test_sync(event_loop, app):
     """Test sync App usage.
@@ -29,8 +31,7 @@ async def test_listen_generation(event_loop, app):
 
     await app.send(event_type, {})
 
-    await app.consumers.message_consumers[event_type].last_messages.get()
-    await app.consumers.message_consumers[event_type].last_messages.get()
+    await wait_messages(app.consumers.message_consumers[event_type], 2)
 
     await app.shutdown()
 

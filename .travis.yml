@@ -17,8 +17,6 @@ jobs:
       install:
         - pip install -e .[dev]
         - pip install codecov
-      after_success:
-        - codecov
       script:
         - pytest --cov-report=term-missing --cov aiomessaging
     - services:

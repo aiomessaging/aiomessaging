@@ -55,18 +55,23 @@ class AbstractConsumer(ABC):
 
 class BaseConsumer:
     """Base consumer implementation.
+
+    :param last_messages_size: max size of last messages queue.
     """
     running = False  # determine when we shutdown gracefully
     loop: asyncio.AbstractEventLoop
     monitoring_task: asyncio.Task
     consuming_queues: List[AbstractQueue]
+    last_messages: asyncio.Queue
 
-    def __init__(self, loop=None, debug=False):
+    def __init__(self, loop=None, debug=False, last_messages_size=5):
         self.loop = loop or asyncio.get_event_loop()
         self.debug = debug
 
         self.consuming_queues = []
         self.msg_tasks = []
+
+        self.last_messages = asyncio.Queue(maxsize=last_messages_size)
 
         self.log = ConsumerLoggerAdapter(
             logging.getLogger(__name__),
@@ -127,6 +132,10 @@ class BaseConsumer:
             # TODO: ack only in case of success of handler
             channel.basic_ack(delivery_tag)
             # TODO: wait for ack ok
+            while self.last_messages.full():
+                # drop old messages
+                await self.last_messages.get()
+            await self.last_messages.put(body)
         # pylint: disable=broad-except
         except Exception:  # pragma: no cover
             self.log.exception("Error in handler task")

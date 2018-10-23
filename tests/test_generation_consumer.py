@@ -35,6 +35,9 @@ async def test_simple(event_loop, caplog):
         body=message.to_dict()
     )
 
+    await consumer.last_messages.get()
+    # TODO: replace with a separate and specific test (tmp queue deletion)
+    # wait tmp queue deletion
     await asyncio.sleep(0.1)
 
     await consumer.stop()

@@ -53,6 +53,7 @@ class AbstractConsumer(ABC):
         pass  # pragma: no cover
 
 
+# pylint: disable=too-many-instance-attributes
 class BaseConsumer:
     """Base consumer implementation.
 

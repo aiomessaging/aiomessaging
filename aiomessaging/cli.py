@@ -38,7 +38,7 @@ def worker(config):
 
 @click.command()
 @click.argument('event_type')
-@click.argument('payload')
+@click.argument('payload', required=False)
 @click.option('-c', '--config')
 @click.option('--count', default=1)
 @click.option('--loop/--no-loop', default=False)

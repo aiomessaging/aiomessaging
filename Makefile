@@ -4,10 +4,10 @@ PYTEST_COV_PARAMS=--cov-report=term-missing --cov aiomessaging --cov-report xml:
 .PHONY: docs
 
 run:
-	python -m aiomessaging
+	python -m aiomessaging worker -c example.yml
 
 send:
-	python send.py
+	python -m aiomessaging send example_event --count 1 -c example.yml
 
 docs:
 	$(MAKE) -C docs/ html

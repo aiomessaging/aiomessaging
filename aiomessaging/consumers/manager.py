@@ -54,7 +54,7 @@ class ConsumersManager:
         if loop:
             self.loop = loop
 
-        await self.listen_generation()
+        await self.start_generation_consumer()
         await self.create_cluster()
         await self.create_event_consumers()
         await self.create_message_consumers()
@@ -65,7 +65,7 @@ class ConsumersManager:
         """
         await self.cluster.stop()
 
-        await self.stop_listen_generation()
+        await self.stop_generation_consumer()
 
         await stop_all(self.event_consumers)
         await stop_all(self.message_consumers)
@@ -173,10 +173,8 @@ class ConsumersManager:
         )
         await self.output_consumers[output][event_type].start()
 
-    async def listen_generation(self):
+    async def start_generation_consumer(self):
         """Listen generation queue of cluster for queue names to consume.
-
-        TODO: rename
 
         Creates consumer for generated messages when cluster event received.
         """
@@ -188,7 +186,7 @@ class ConsumersManager:
         )
         await self.generation_consumer.start()
 
-    async def stop_listen_generation(self):
+    async def stop_generation_consumer(self):
         """Stop listen for generation queues.
         """
         await self.generation_consumer.stop()

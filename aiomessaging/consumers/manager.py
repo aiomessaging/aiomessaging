@@ -10,6 +10,7 @@ from ..queues import QueueBackend
 from ..config import Config
 from ..router import Router
 from ..cluster import Cluster
+from ..utils import class_from_string
 
 from .event import EventConsumer
 from .message import MessageConsumer
@@ -17,6 +18,7 @@ from .output import OutputConsumer
 from .generation import GenerationConsumer
 
 
+# pylint: disable=too-many-instance-attributes
 class ConsumersManager:
 
     """Consumers manager.
@@ -85,8 +87,10 @@ class ConsumersManager:
         await self.cluster.start()
 
     async def cluster_on_output_observed(self, event_type, output):
+        """Handle output observation from cluster.
+        """
+        # TODO: need to find better approach?
         cls_path, args, kwargs = output
-        from ..utils import class_from_string
         OutputCls = class_from_string(cls_path)
         output = OutputCls.load(args, kwargs)
         await self.start_output_consumer(event_type, output.name)

@@ -1,7 +1,5 @@
 """Message consumer.
 """
-import asyncio
-
 from typing import Callable
 
 from ..message import Message

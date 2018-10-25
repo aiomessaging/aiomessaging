@@ -4,6 +4,8 @@ tests helpers
 import logging
 import asyncio
 
+from unittest.mock import Mock
+
 from aiomessaging.queues import QueueBackend
 from aiomessaging.consumers import OutputConsumer, MessageConsumer
 from aiomessaging.router import Router
@@ -63,7 +65,6 @@ class MessageConsumerContext:
             router=router,
             output_queue=output_queue,
             queue=queue,
-            output_observation_queue=asyncio.Queue(),
         )
         await self.message_consumer.start()
         return self.message_consumer
@@ -116,3 +117,11 @@ async def wait_messages(consumer, count=1):
     """
     for _ in range(count):
         await consumer.last_messages.get()
+
+
+def mock_coro(return_value=None):
+    @asyncio.coroutine
+    def mock_coro(*args, **kwargs):
+        return return_value
+
+    return Mock(wraps=mock_coro)

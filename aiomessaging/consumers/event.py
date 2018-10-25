@@ -1,5 +1,7 @@
 """Event consumer.
 """
+from typing import Callable
+
 from ..event import Event
 # from ..exceptions import DropException, DelayException
 
@@ -15,15 +17,23 @@ class EventConsumer(SingleQueueConsumer):
     """
 
     queue_prefix = "aiomessaging.events"
+    generation_complete_handler: Callable
 
     def __init__(self, event_type, event_pipeline, generators,
-                 generation_queue, queue_service, **kwargs):
+                 queue_service, **kwargs):
         super().__init__(**kwargs)
         self.event_type = event_type
         self.pipeline = event_pipeline
         self.generators = generators
-        self.generation_queue = generation_queue
         self.queue_service = queue_service
+
+    def on_generation_complete(self, handler):
+        """Add generation complete callback.
+
+        Handler will be invoked after generation complete and will receive tmp
+        queue name in `queue_name` argument.
+        """
+        self.generation_complete_handler = handler
 
     async def handler(self, message):
         event = Event('example_event', payload=message)
@@ -60,4 +70,5 @@ class EventConsumer(SingleQueueConsumer):
     async def start_consume(self, queue):
         """ Start consume queue with generated messages
         """
-        await self.generation_queue.put(queue.name)
+        if hasattr(self, 'generation_complete_handler'):
+            await self.generation_complete_handler(queue.name)

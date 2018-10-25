@@ -17,22 +17,15 @@ from .output import OutputConsumer
 from .generation import GenerationConsumer
 
 
-# pylint: disable=too-many-instance-attributes
 class ConsumersManager:
 
     """Consumers manager.
 
     Container for all application consumers.
-
-    :param generation_queue: queue of tmp queue names with generated messages
-    :param output_observation_queue: queue for outputs observations
     """
 
     config: Config
     queue: QueueBackend
-
-    generation_queue: asyncio.Queue
-    output_observation_queue: asyncio.Queue
 
     loop: asyncio.AbstractEventLoop
     cluster: Cluster
@@ -42,8 +35,6 @@ class ConsumersManager:
     output_consumers: Dict[str, Dict]
 
     generation_consumer: GenerationConsumer
-    generation_listener: asyncio.Task
-    output_observation_listener: asyncio.Task
 
     def __init__(self, config, queue: QueueBackend, loop=None):
         self.config = config
@@ -55,8 +46,6 @@ class ConsumersManager:
         self.event_consumers = {}
         self.message_consumers = {}
         self.output_consumers = defaultdict(dict)
-        self.generation_queue = asyncio.Queue(loop=loop)
-        self.output_observation_queue = asyncio.Queue(loop=loop)
 
     async def start_all(self, loop=None):
         """Start all common consumers.
@@ -64,24 +53,17 @@ class ConsumersManager:
         if loop:
             self.loop = loop
 
+        await self.listen_generation()
         await self.create_cluster()
         await self.create_event_consumers()
         await self.create_message_consumers()
         await self.create_output_consumers()
-
-        self.generation_listener = self.loop.create_task(
-            self.listen_generation()
-        )
-        self.output_observation_listener = self.loop.create_task(
-            self.listen_output_observations()
-        )
 
     async def stop_all(self):
         """Stop all started consumers.
         """
         await self.cluster.stop()
 
-        await self.stop_listen_output_observations()
         await self.stop_listen_generation()
 
         await stop_all(self.event_consumers)
@@ -96,10 +78,28 @@ class ConsumersManager:
         queue = await self.queue.cluster_queue()
         self.cluster = Cluster(
             queue=queue,
-            generation_queue=self.generation_queue,
             loop=self.loop
         )
+        self.cluster.on_start_consume(self.consume_generation_queue)
+        self.cluster.on_output_observed(self.cluster_on_output_observed)
         await self.cluster.start()
+
+    async def cluster_on_output_observed(self, event_type, output):
+        cls_path, args, kwargs = output
+        from ..utils import class_from_string
+        OutputCls = class_from_string(cls_path)
+        output = OutputCls.load(args, kwargs)
+        await self.start_output_consumer(event_type, output.name)
+
+    async def consume_generation_queue(self, queue_name):
+        """Consume tmp queue.
+
+        Invoked by Cluster instance when `start_consume` action received.
+        """
+        self.log.debug('Start consume tmp queue %s (start_consume received '
+                       'from cluster)', queue_name)
+        queue = await self.queue.generation_queue(name=queue_name)
+        self.generation_consumer.consume(queue)
 
     async def create_event_consumers(self):
         """Create event consumers for each event type.
@@ -108,17 +108,18 @@ class ConsumersManager:
             event_pipeline = self.config.get_event_pipeline(event_type)
             generators = self.config.get_generators(event_type)
 
-            self.event_consumers[event_type] = EventConsumer(
+            consumer = EventConsumer(
                 event_type=event_type,
                 event_pipeline=event_pipeline,
                 generators=generators,
-                generation_queue=self.generation_queue,
                 queue=await self.queue.events_queue(event_type),
                 # TODO: replace with tmp queue factory?
                 queue_service=self.queue,
                 loop=self.loop,
             )
-            await self.event_consumers[event_type].start()
+            consumer.on_generation_complete(self.cluster.start_consume)
+            await consumer.start()
+            self.event_consumers[event_type] = consumer
 
     async def create_message_consumers(self):
         """Create message consumers.
@@ -127,15 +128,25 @@ class ConsumersManager:
         for event_type in self.event_types():
             self.log.debug("Create MessageConsumer for type %s", event_type)
 
-            self.message_consumers[event_type] = MessageConsumer(
+            consumer = MessageConsumer(
                 event_type,
                 router=self.get_router(event_type),
                 output_queue=await self.queue.output_queue(event_type),
-                output_observation_queue=self.output_observation_queue,
                 queue=await self.queue.messages_queue(event_type),
                 loop=self.loop
             )
-            await self.message_consumers[event_type].start()
+            consumer.on_output_observed(self.on_output_observed)
+            await consumer.start()
+            self.message_consumers[event_type] = consumer
+
+    async def on_output_observed(self, event_type: str, output):
+        """Output observation handler.
+
+        Start output consumer and notify cluster on output observed.
+        """
+        self.log.debug("New output observed: %s", output.name)
+        await self.start_output_consumer(event_type, output.name)
+        await self.cluster.output_observed(event_type, output)
 
     async def create_output_consumers(self):
         """Create output consumers.
@@ -150,6 +161,8 @@ class ConsumersManager:
         :param str event_type: event type
         :param str output: output backend name
         """
+        if output in self.output_consumers and event_type in self.output_consumers[output]:
+            return
         queue = await self.queue.output_queue(event_type, output)
         messages_queue = await self.queue.messages_queue(event_type)
         self.output_consumers[output][event_type] = OutputConsumer(
@@ -176,35 +189,10 @@ class ConsumersManager:
         )
         await self.generation_consumer.start()
 
-        while True:
-            queue_name = await self.generation_queue.get()
-            self.log.debug('Message in generation_queue %s', queue_name)
-            queue = await self.queue.generation_queue(name=queue_name)
-            self.generation_consumer.consume(queue)
-
     async def stop_listen_generation(self):
         """Stop listen for generation queues.
         """
         await self.generation_consumer.stop()
-        self.generation_listener.cancel()
-
-    async def listen_output_observations(self):
-        """Start listen outputs used in message consumer.
-
-        Try to start new output when it first time observed.
-        """
-        self.log.debug("Start listen outputs observations")
-        while True:
-            [event_type, output] = await self.output_observation_queue.get()
-            if event_type not in self.output_consumers[output.name]:
-                self.log.debug("New output observed: %s", output.name)
-                await self.start_output_consumer(event_type, output.name)
-                await self.cluster.output_observed(event_type, output)
-
-    async def stop_listen_output_observations(self):
-        """Stop listen outputs discovery.
-        """
-        self.output_observation_listener.cancel()
 
     # pylint: disable=no-self-use
     def event_types(self):

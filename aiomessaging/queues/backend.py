@@ -239,7 +239,7 @@ class QueueBackend:
             routing_key=''
         )
 
-    async def output_queue(self, event_type, output_name=None) -> Queue:
+    async def output_queue(self, event_type: str, output_name=None) -> Queue:
         """Get output queue.
         """
         name = f"output.{event_type}"

@@ -1,32 +1,63 @@
 """Cluster utils.
 """
-import asyncio
-
+from typing import Dict, List, Callable
+from collections import defaultdict
 
 from .consumers.base import SingleQueueConsumer
 
 
 class Cluster(SingleQueueConsumer):
-    """aiomessaging Cluster.
+    """Cluster.
 
-    Provide interface to other cluster instances.
-
-    `generation_queue` used to communicate with application: every time
-    Cluster receives `consume` message it place generation queue name to it in
-    this queue. Application is responsible to create consumers for this queues.
+    Provide interface to other cluster instances and allows to add handlers for
+    specific actions. When action received from cluster queue, all related
+    handlers will be invoked. All errors will be ignored (just logged).
     """
 
-    generation_queue: asyncio.Queue
+    START_CONSUME = 'start_consume'
+    OUTPUT_OBSERVED = 'output_observed'
 
-    def __init__(self, queue, generation_queue, loop, **kwargs):
-        self.actions = {
-            'consume': generation_queue
-        }
+    ACTIONS = {START_CONSUME, OUTPUT_OBSERVED}
+
+    action_handlers: Dict[str, List[Callable]]
+
+    def __init__(self, queue, loop=None, **kwargs):
+        self.action_handlers = defaultdict(list)
 
         super().__init__(queue=queue, loop=loop, **kwargs)
 
+    async def start_consume(self, queue_name):
+        """Publish message to cluster to start consume queue with generated messages.
+        """
+        await self.queue.publish(
+            {'action': self.START_CONSUME, 'queue_name': queue_name}
+        )
+        self.log.debug("tell cluster to start consume %s", queue_name)
+
+    def on_start_consume(self, handler):
+        """Add handler for START_CONSUME shortcut.
+        """
+        self.add_action_handler(self.START_CONSUME, handler)
+
+    async def output_observed(self, event_type, output):
+        """Publish to cluster new output backends.
+        """
+        await self.queue.publish({
+            'action': self.OUTPUT_OBSERVED,
+            'event_type': event_type,
+            'output': output.serialize()
+        })
+
+    def on_output_observed(self, handler):
+        """Add handler for OUTPUT_OBSERVED shortcut.
+        """
+        self.add_action_handler(self.OUTPUT_OBSERVED, handler)
+
     async def handler(self, message):
-        """Handle cluster message
+        """Handle cluster message.
+
+        Get message from cluster queue, check if it contain `action` field and
+        this action is available, invoke all handlers bonded to this action.
         """
         self.log.debug("Cluster message received %s", message)
 
@@ -34,36 +65,27 @@ class Cluster(SingleQueueConsumer):
         body = message
 
         try:
-            cluster_action = body['action']
+            cluster_action = body.pop('action')
         except KeyError:
             self.log.error("No action in cluster message: %s", body)
             return
 
-        try:
-            queue = self.actions[cluster_action]  # WTF? How action compared to queue? Why?
-        except KeyError:
-            self.log.error("Invalid cluster action")
+        if cluster_action not in self.ACTIONS:
+            self.log.error("Invalid cluster action %s", cluster_action)
             return
 
-        try:
-            await queue.put(body['queue_name'])
-        except KeyError:
-            self.log.error("No queue name in message %s", body)
-            return
+        for handler in self.action_handlers[cluster_action]:
+            try:
+                await handler(**body)
+            # pylint: disable=broad-except
+            except Exception:  # pragma: no cover
+                self.log.exception(
+                    "Exception while handling cluster action %s (%s)",
+                    cluster_action, handler
+                )
 
-    async def start_consume(self, queue_name):
-        """Publish message to cluster to start consume queue with generated messages.
+    def add_action_handler(self, action, handler):
+        """Add handler for specified action.
         """
-        await self.queue.publish(
-            {'action': 'consume', 'queue_name': queue_name}
-        )
-        self.log.debug("tell cluster to start consume %s", queue_name)
-
-    async def output_observed(self, event_type, output):
-        """Publish to cluster new output backends.
-        """
-        await self.queue.publish({
-            'action': 'output_observed',
-            'event_type': event_type,
-            'output': output.serialize()
-        })
+        assert action in self.ACTIONS
+        self.action_handlers[action].append(handler)

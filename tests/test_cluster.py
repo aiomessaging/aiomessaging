@@ -1,4 +1,3 @@
-import asyncio
 import pytest
 
 from aiomessaging.cluster import Cluster
@@ -9,6 +8,7 @@ from .helpers import (
     log_count,
     send_test_message,
     wait_messages,
+    mock_coro,
 )
 
 
@@ -20,26 +20,23 @@ async def test_handle_action(event_loop, caplog):
     await queues.connect()
 
     queue = await queues.cluster_queue()
-    gen_queue = asyncio.Queue()
-    cluster = Cluster(queue=queue, generation_queue=gen_queue, loop=event_loop)
+    start_consume_handler = mock_coro()
+    cluster = Cluster(queue=queue, loop=event_loop)
+    cluster.on_start_consume(start_consume_handler)
     await cluster.start()
 
     # send message and wait some time
     await send_test_message(queues.connection, queue_name=queue.name, body={
-        "action": "consume",
+        "action": Cluster.START_CONSUME,
         "queue_name": "example"
     })
     await wait_messages(cluster)
 
     await cluster.stop()
 
-    assert gen_queue.empty() is False, \
-        "Generation queue must contain our 'consume' message"
+    start_consume_handler.assert_called_once_with(queue_name='example')
 
     await queues.close()
-
-    queue_name = gen_queue.get_nowait()
-    assert queue_name == "example"
 
     assert not has_log_message(caplog, level='ERROR')
 
@@ -52,8 +49,10 @@ async def test_invalid_action(event_loop, caplog):
     await queues.connect()
 
     queue = await queues.cluster_queue()
-    gen_queue = asyncio.Queue()
-    cluster = Cluster(queue=queue, generation_queue=gen_queue, loop=event_loop)
+    start_consume_handler = mock_coro()
+
+    cluster = Cluster(queue=queue, loop=event_loop)
+    cluster.on_start_consume(start_consume_handler)
     await cluster.start()
 
     # send message and wait some time
@@ -62,7 +61,7 @@ async def test_invalid_action(event_loop, caplog):
         "queue_name": "example"
     })
     await send_test_message(queues.connection, queue_name=queue.name, body={
-        "action": "consume",
+        "action": Cluster.START_CONSUME,
     })
     await send_test_message(queues.connection, queue_name=queue.name, body={
         "queue_name": "example"
@@ -72,13 +71,14 @@ async def test_invalid_action(event_loop, caplog):
 
     await cluster.stop()
 
-    assert gen_queue.empty() is True, \
-        "Generation queue must not contain our *invalid* message"
+    # second action called with no arguments
+    start_consume_handler.assert_called_once_with()
 
     await queues.close()
 
+    # errors from first and third invalid actions
     assert has_log_message(caplog, level='ERROR')
-    assert log_count(caplog, level='ERROR') == 3
+    assert log_count(caplog, level='ERROR') == 2
 
 
 @pytest.mark.asyncio
@@ -88,7 +88,7 @@ async def test_start_consume(event_loop, caplog):
 
     queue = await queues.cluster_queue()
 
-    cluster = Cluster(queue=queue, generation_queue=asyncio.Queue(), loop=event_loop)
+    cluster = Cluster(queue=queue, loop=event_loop)
     await cluster.start()
 
     await cluster.start_consume('example')

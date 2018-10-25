@@ -1,6 +1,6 @@
 """Message consumer.
 """
-import asyncio
+from typing import Callable
 
 from ..message import Message
 from ..router import Router
@@ -33,15 +33,19 @@ class MessageConsumer(BaseMessageConsumer):
     event_type: str
     router: Router
     output_queue: AbstractQueue
-    output_observation_queue: asyncio.Queue
+    output_observed_handler: Callable
 
     def __init__(self, event_type, router: Router, output_queue,
-                 output_observation_queue, **kwargs) -> None:
+                 **kwargs) -> None:
         super().__init__(**kwargs)
         self.event_type = event_type
         self.router = router
         self.output_queue = output_queue
-        self.output_observation_queue = output_observation_queue
+
+    def on_output_observed(self, handler):
+        """Set output observed handler.
+        """
+        self.output_observed_handler = handler
 
     async def handle_message(self, message: Message):
         """Message handler.
@@ -59,9 +63,8 @@ class MessageConsumer(BaseMessageConsumer):
                     output = action.get_output()
 
                     # manager will create output consumer for us if possible
-                    await self.output_observation_queue.put(
-                        [self.event_type, output]
-                    )
+                    if hasattr(self, 'output_observed_handler'):
+                        await self.output_observed_handler(self.event_type, output)
 
                     await self.output_queue.publish(
                         message.to_dict(), routing_key=output.name

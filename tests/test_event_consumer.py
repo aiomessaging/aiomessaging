@@ -21,7 +21,7 @@ async def test_start(event_loop: asyncio.AbstractEventLoop, caplog):
     await backend.connect()
 
     queue = await backend.cluster_queue()
-    cluster = Cluster(queue=queue, generation_queue=asyncio.Queue(), loop=event_loop)
+    cluster = Cluster(queue=queue, loop=event_loop)
     await cluster.start()
 
     def test_callable(event):
@@ -37,7 +37,6 @@ async def test_start(event_loop: asyncio.AbstractEventLoop, caplog):
         loop=event_loop,
         event_pipeline=pipeline,
         generators=generators,
-        generation_queue=asyncio.Queue(),
         queue_service=backend,
         queue=queue
     )
@@ -61,7 +60,7 @@ async def test_error_handler(event_loop: asyncio.AbstractEventLoop, caplog):
     await backend.connect()
 
     queue = await backend.cluster_queue()
-    cluster = Cluster(queue=queue, generation_queue=asyncio.Queue(), loop=event_loop)
+    cluster = Cluster(queue=queue, loop=event_loop)
     await cluster.start()
 
     pipeline = EventPipeline([])
@@ -74,7 +73,6 @@ async def test_error_handler(event_loop: asyncio.AbstractEventLoop, caplog):
         loop=event_loop,
         event_pipeline=pipeline,
         generators=generators,
-        generation_queue=asyncio.Queue(),
         queue_service=backend,
         queue=queue
     )

@@ -31,7 +31,6 @@ async def test_simple(event_loop, caplog):
         router=router,
         output_queue=output_queue,
         queue=queue,
-        output_observation_queue=asyncio.Queue(),
         loop=event_loop
     )
 
@@ -60,7 +59,6 @@ async def test_any_output_available(event_loop, caplog):
         router=router,
         output_queue=output_queue,
         queue=queue,
-        output_observation_queue=asyncio.Queue(),
         loop=event_loop
     )
 

@@ -36,12 +36,6 @@ async def test_listen_generation(event_loop, app):
     await app.shutdown()
 
 
-@pytest.mark.asyncio
-async def test_default_config():
-    with mock.patch('aiomessaging.app.apply_logging_configuration'):
-        AiomessagingApp()
-
-
 @pytest.fixture()
 def app():
     """App fixture with testing config.

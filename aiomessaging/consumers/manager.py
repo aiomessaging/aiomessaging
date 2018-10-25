@@ -10,7 +10,6 @@ from ..queues import QueueBackend
 from ..config import Config
 from ..router import Router
 from ..cluster import Cluster
-from ..utils import class_from_string
 
 from .event import EventConsumer
 from .message import MessageConsumer
@@ -83,16 +82,12 @@ class ConsumersManager:
             loop=self.loop
         )
         self.cluster.on_start_consume(self.consume_generation_queue)
-        self.cluster.on_output_observed(self.cluster_on_output_observed)
+        self.cluster.on_output_observed(self.on_cluster_output_observed)
         await self.cluster.start()
 
-    async def cluster_on_output_observed(self, event_type, output):
+    async def on_cluster_output_observed(self, event_type, output):
         """Handle output observation from cluster.
         """
-        # TODO: need to find better approach?
-        cls_path, args, kwargs = output
-        OutputCls = class_from_string(cls_path)
-        output = OutputCls.load(args, kwargs)
         await self.start_output_consumer(event_type, output.name)
 
     async def consume_generation_queue(self, queue_name):

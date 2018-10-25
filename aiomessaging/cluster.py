@@ -4,6 +4,7 @@ from typing import Dict, List, Callable
 from collections import defaultdict
 
 from .consumers.base import SingleQueueConsumer
+from .utils import class_from_string
 
 
 class Cluster(SingleQueueConsumer):
@@ -51,7 +52,13 @@ class Cluster(SingleQueueConsumer):
     def on_output_observed(self, handler):
         """Add handler for OUTPUT_OBSERVED shortcut.
         """
-        self.add_action_handler(self.OUTPUT_OBSERVED, handler)
+        def wrapper(event_type, output):
+            # deserialize output instance
+            cls_path, args, kwargs = output
+            OutputCls = class_from_string(cls_path)
+            return handler(event_type, OutputCls.load(args, kwargs))
+
+        self.add_action_handler(self.OUTPUT_OBSERVED, wrapper)
 
     async def handler(self, message):
         """Handle cluster message.

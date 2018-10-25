@@ -3,11 +3,13 @@
 from typing import Dict, List, Callable
 from collections import defaultdict
 
+from .queues import AbstractQueue
 from .consumers.base import SingleQueueConsumer
 from .utils import class_from_string
 
 
 class Cluster(SingleQueueConsumer):
+
     """Cluster.
 
     Provide interface to other cluster instances and allows to add handlers for
@@ -22,7 +24,7 @@ class Cluster(SingleQueueConsumer):
 
     action_handlers: Dict[str, List[Callable]]
 
-    def __init__(self, queue, loop=None, **kwargs):
+    def __init__(self, queue: AbstractQueue, loop=None, **kwargs):
         self.action_handlers = defaultdict(list)
 
         super().__init__(queue=queue, loop=loop, **kwargs)
@@ -66,15 +68,12 @@ class Cluster(SingleQueueConsumer):
         Get message from cluster queue, check if it contain `action` field and
         this action is available, invoke all handlers bonded to this action.
         """
-        self.log.debug("Cluster message received %s", message)
-
         self.log.debug("Message body:\n%s", message)
-        body = message
 
         try:
-            cluster_action = body.pop('action')
+            cluster_action = message.pop('action')
         except KeyError:
-            self.log.error("No action in cluster message: %s", body)
+            self.log.error("No action in cluster message: %s", message)
             return
 
         if cluster_action not in self.ACTIONS:
@@ -83,7 +82,7 @@ class Cluster(SingleQueueConsumer):
 
         for handler in self.action_handlers[cluster_action]:
             try:
-                await handler(**body)
+                await handler(**message)
             # pylint: disable=broad-except
             except Exception:  # pragma: no cover
                 self.log.exception(

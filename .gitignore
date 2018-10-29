@@ -6,7 +6,7 @@ __pycache__
 
 coverage.xml
 cov.xml
-.coverage*
+.coverage
 .pytest_cache
 .mypy_cache
 .testmon*

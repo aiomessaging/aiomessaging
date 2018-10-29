@@ -1,0 +1,4 @@
+[run]
+omit =
+    aiomessaging/cli.py
+    aiomessaging/__main__.py

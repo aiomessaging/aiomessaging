@@ -33,7 +33,7 @@ class ConsumersManager:
 
     event_consumers: Dict[str, EventConsumer]
     message_consumers: Dict[str, MessageConsumer]
-    output_consumers: Dict[str, Dict]
+    output_consumers: Dict[str, Dict[str, OutputConsumer]]
 
     generation_consumer: GenerationConsumer
 

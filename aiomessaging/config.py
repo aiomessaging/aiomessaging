@@ -90,6 +90,7 @@ class Config(BaseConfig):
     def events(self):
         return self.get('events', {})
 
+    # pylint: disable=no-self-use
     def get_logging_dict(self):
         """Logging dict config.
         """

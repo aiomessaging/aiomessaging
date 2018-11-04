@@ -58,7 +58,6 @@ class ConsumersManager:
         await self.create_cluster()
         await self.create_event_consumers()
         await self.create_message_consumers()
-        await self.create_output_consumers()
 
     async def stop_all(self):
         """Stop all started consumers.
@@ -144,15 +143,8 @@ class ConsumersManager:
         Start output consumer and notify cluster on output observed.
         """
         self.log.debug("New output observed: %s", output.name)
-        await self.start_output_consumer(event_type, output.name)
+        # await self.start_output_consumer(event_type, output.name)
         await self.cluster.output_observed(event_type, output)
-
-    async def create_output_consumers(self):
-        """Create output consumers.
-        """
-        for event_type in self.event_types():
-            for output in self.config.get_enabled_outputs(event_type):
-                await self.start_output_consumer(event_type, output)
 
     async def start_output_consumer(self, event_type, output):
         """Start output consumer for provided event type.

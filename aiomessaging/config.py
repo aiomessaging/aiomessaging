@@ -90,10 +90,6 @@ class Config(BaseConfig):
     def events(self):
         return self.get('events', {})
 
-    @property
-    def outputs(self):
-        return self.get('outputs', {})
-
     def get_logging_dict(self):
         """Logging dict config.
         """
@@ -147,15 +143,6 @@ class Config(BaseConfig):
         """Config for particular event type.
         """
         return self.events[event_type]
-
-    # pylint:disable=no-self-use
-    def get_enabled_outputs(self, event_type):
-        """Get enabled outputs for this provided event type.
-
-        TODO: we need a way to get this list from config directly or from
-              pipeline (problem with generator)
-        """
-        return set(self.outputs.keys())
 
     def get_queue_backend(self):
         """Queue backend instance.

@@ -16,15 +16,6 @@ def test_get_logging_dict():
     assert isinstance(conf.get_logging_dict(), dict)
 
 
-def test_log_format():
-    """Test log format configuration.
-
-    Just for coverage: we don't use logging when measuring coverage.
-    """
-    conf = Config({'log_format': '123'})
-    assert conf.get_log_format() == '123'
-
-
 def test_class_from_string():
     """Test class_from_string function.
     """

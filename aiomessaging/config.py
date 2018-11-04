@@ -103,7 +103,7 @@ class Config(BaseConfig):
             "formatters": {
                 "default": {
                     "class": "logging.Formatter",
-                    "format": self.get_log_format()
+                    "format": "%(asctime)-15s %(levelname)-7s %(message)s"
                 }
             },
             "handlers": {
@@ -156,13 +156,6 @@ class Config(BaseConfig):
               pipeline (problem with generator)
         """
         return set(self.outputs.keys())
-
-    def get_log_format(self):
-        """Log format.
-        """
-        if 'log_format' in self:
-            return self['log_format']
-        return "%(asctime)-15s %(levelname)-7s %(message)s"
 
     def get_queue_backend(self):
         """Queue backend instance.
